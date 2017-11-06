@@ -20,9 +20,11 @@ var gl = null; // WebGL context
 
 var shaderProgram = null;
 
-var triangleVertexPositionBuffer = null;
-	
-var triangleVertexColorBuffer = null;
+var VertexPositionBuffer = null;	
+var VertexColorBuffer = null;
+
+var player1VertexPositionBuffer = null;
+var player1VertexColorBuffer = null;
 
 // The GLOBAL transformation parameters
 
@@ -50,11 +52,11 @@ var angleZZ = 0.0;
 
 // The scaling factors
 
-var sx = 0.5;
+var sx = 1;
 
-var sy = 0.5;
+var sy = 1;
 
-var sz = 0.5;
+var sz = 1;
 
 // GLOBAL Animation controls
 
@@ -154,40 +156,73 @@ var normals = [
 
 // Handling the Vertex and the Color Buffers
 
-function initBuffers() {	
+function initBuffers(coords, colors) {	
 	
 	// Coordinates
 		
-	triangleVertexPositionBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(gameArea), gl.STATIC_DRAW);
-	triangleVertexPositionBuffer.itemSize = 3;
-	triangleVertexPositionBuffer.numItems = gameArea.length / 3;			
+	VertexPositionBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, VertexPositionBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(coords), gl.STATIC_DRAW);
+	VertexPositionBuffer.itemSize = 3;
+	VertexPositionBuffer.numItems = coords.length / 3;			
 
 	// Associating to the vertex shader
 	
 	gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 
-			triangleVertexPositionBuffer.itemSize, 
+			VertexPositionBuffer.itemSize, 
 			gl.FLOAT, false, 0, 0);
 	
 	// gameAreaColors
 		
-	triangleVertexColorBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexColorBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(gameAreaColors), gl.STATIC_DRAW);
-	triangleVertexColorBuffer.itemSize = 3;
-	triangleVertexColorBuffer.numItems = gameAreaColors.length / 3;			
+	VertexColorBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, VertexColorBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+	VertexColorBuffer.itemSize = 3;
+	VertexColorBuffer.numItems = colors.length / 3;			
 
 	// Associating to the vertex shader
 	
 	gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, 
-			triangleVertexColorBuffer.itemSize, 
+			VertexColorBuffer.itemSize, 
 			gl.FLOAT, false, 0, 0);
 }
 
 //----------------------------------------------------------------------------
 
 //  Drawing the model
+
+function drawGameArea(mvMatrix){
+
+	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+	
+	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
+
+	initBuffers(gameArea, gameAreaColors);
+	gl.cullFace( gl.FRONT );
+	gl.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems); 
+
+}
+
+function drawPlayer1(angleXX, angleYY, angleZZ, 
+	sx, sy, sz,
+	tx, ty, tz,
+	mvMatrix,
+	primitiveType){
+
+	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ) );
+	//mvMatrix = mult( mvMatrix, rotationZZMatrix( angleZZ ) );
+	//mvMatrix = mult( mvMatrix, rotationYYMatrix( angleYY ) );
+	//mvMatrix = mult( mvMatrix, rotationXXMatrix( angleXX ) );
+	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
+
+	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
+
+	initBuffers(player1, player1Colors);
+	gl.cullFace( gl.BACK);
+	gl.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
+
+}
 
 function drawModel( angleXX, angleYY, angleZZ, 
 					sx, sy, sz,
@@ -353,14 +388,14 @@ function drawModel( angleXX, angleYY, angleZZ,
 		
 		var i;
 		
-		for( i = 0; i < triangleVertexPositionBuffer.numItems / 3; i++ ) {
+		for( i = 0; i < VertexPositionBuffer.numItems / 3; i++ ) {
 		
 			gl.drawArrays( primitiveType, 3 * i, 3 ); 
 		}
 	}	
 	else {
 				
-		gl.drawArrays(primitiveType, 0, triangleVertexPositionBuffer.numItems); 
+		gl.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems); 
 		
 	}	
 }
@@ -381,10 +416,12 @@ function drawScene() {
 	
 	// Computing the Projection Matrix
 
-	pMatrix = perspective(90, 1, 0.01, 3);
+	pMatrix = perspective(90, 1, 1, 4.1);
 	// Global transformation !!
 	
 	globalTz = -1;
+	//globalTz = 0;
+
 	
 	// Passing the Projection Matrix to apply the current projection
 	
@@ -397,12 +434,16 @@ function drawScene() {
 	mvMatrix = translationMatrix( 0, 0, globalTz );
 	
 	// Instantianting the current model
+
+	drawGameArea(mvMatrix);
+
+	drawPlayer1(angleXX, angleYY, angleZZ, 0.25, 0.25, sz, tx, ty, tz, mvMatrix, primitiveType);
 		
-	drawModel( angleXX, angleYY, angleZZ, 
+	/*drawModel( angleXX, angleYY, angleZZ, 
 	           sx, sy, sz,
 	           tx, ty, tz,
 	           mvMatrix,
-	           primitiveType );
+	           primitiveType );*/
 }
 
 //----------------------------------------------------------------------------
@@ -708,11 +749,11 @@ function setEventListeners(){
 
 		angleZZ = 0.0;
 
-		sx = 0.5;
+		sx = 1.0;
 
-		sy = 0.5;
+		sy = 1.0;
 
-		sz = 0.5;
+		sz = 1.0;
 		
 		rotationXX_ON = 0;
 		
@@ -767,7 +808,7 @@ function initWebGL( canvas ) {
 		// The next instruction is not needed...
 		
 		// To see the inside of the game area
-		gl.cullFace( gl.FRONT );
+		gl.cullFace( gl.BACK );
 
 		// Enable DEPTH-TEST
 		
@@ -792,7 +833,7 @@ function runWebGL() {
 	
 	setEventListeners();
 	
-	initBuffers();
+	//initBuffers();
 	
 	tick();		// NEW --- A timer controls the rendering / animation    
 
