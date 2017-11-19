@@ -26,6 +26,8 @@ var VertexColorBuffer = null;
 var player1VertexPositionBuffer = null;
 var player1VertexColorBuffer = null;
 
+var player1x = 0;
+
 // The GLOBAL transformation parameters
 
 var globalAngleYY = 0.0;
@@ -214,6 +216,7 @@ function drawPlayer1(angleXX, angleYY, angleZZ,
 	//mvMatrix = mult( mvMatrix, rotationYYMatrix( angleYY ) );
 	//mvMatrix = mult( mvMatrix, rotationXXMatrix( angleXX ) );
 	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
+
 
 	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
 	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
@@ -528,16 +531,20 @@ function setEventListeners(){
 		var key = event.keyCode;
 		switch(key){
 			case 52:
-				tx -= 0.05;
+				if(tx > -0.75)
+					tx -= 0.05;
 				break;
 			case 56:
-				ty += 0.05;
+				if(ty < 0.75)
+					ty += 0.05;
 				break;
 			case 54:
-				tx += 0.05;
+				if(tx < 0.75)
+					tx += 0.05;
 				break;
 			case 53:
-				ty -= 0.05;
+				if(ty > -0.75)
+					ty -= 0.05;
 				break;
 		}
 	});

@@ -677,3 +677,30 @@ function multiplyVectorByMatrix( m, p )
 	
 	return result;
 }
+
+function playerInBounds(player){
+
+    var dimentions = getPlayersEdges(player);
+    var inbounds = true;
+
+    if(dimentions[0] <= -1)
+        inbounds = false;
+    else if (dimentions[1] >= 1)
+        inbounds = false;
+    else if (dimentions[2] >= 1)
+        inbounds = false;
+    else if (dimentions[3] <= -1)
+        inbounds = false;
+
+    return inbounds;
+}
+
+function getPlayersEdges(player){
+
+ var left = player[0];
+ var top = player[1];
+ var right = player[7];
+ var bottom = player[4];
+
+ return [left, top, right, bottom];
+}

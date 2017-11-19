@@ -1,3 +1,4 @@
+
 var gameArea = [
 // FRONT FACE		 
 -1, -1,  0,
