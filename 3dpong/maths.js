@@ -678,6 +678,8 @@ function multiplyVectorByMatrix( m, p )
 	return result;
 }
 
+
+
 function playerInBounds(player){
 
     var dimentions = getPlayersEdges(player);
@@ -693,6 +695,46 @@ function playerInBounds(player){
         inbounds = false;
 
     return inbounds;
+}
+
+function multByScalar(vector, scalar){
+    for( var i = 0; i < 3; i++ ) {
+		vector[i] = vector[i]*scalar;
+    }
+    return vector;
+}
+
+function addVectors(v1, v2){
+
+    var result = vec3();
+
+    for( var i = 0; i < 3; i++ ) {
+		result[i] = v1[i] + v2[i];
+    }
+
+    return result;
+}
+
+function subVectors(v1, v2){
+    
+    var result = vec3();
+
+    for( var i = 0; i < 3; i++ ) {
+        result[i] = v1[i] - v2[i];
+    }
+
+    return result;
+}
+
+function computeRefection(vector, planeNormal){
+    normalize(vector);
+    normalize(planeNormal);
+    var dp = dotProduct(vector, planeNormal);
+    dp = dp * 2;
+    var result = multByScalar(planeNormal, dp);
+    //result = vectorProduct(result, planeNormal);
+    result = subVectors(vector, result);
+    return result;
 }
 
 function getPlayersEdges(player){

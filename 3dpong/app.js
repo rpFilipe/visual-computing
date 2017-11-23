@@ -30,6 +30,12 @@ var globalAngleYY = 0.0;
 
 var globalTz = 0.0;
 
+var velocity_norm = 0.01;
+var velocity = vec3();
+velocity[0] = Math.random();
+velocity[1] = Math.random();
+velocity[2] = 0.5;
+
 // The local transformation parameters
 
 // The translation vector
@@ -41,6 +47,10 @@ var tz1 = 0.0;
 var tx2 = 0.0;
 var ty2 = 0.0;
 var tz2 = 0.0;
+
+var txb = 0.0;
+var tyb = 0.0;
+var tzb = 2;
 
 // The rotation angles in degrees
 
@@ -239,6 +249,28 @@ function drawPlayer2(angleXX, angleYY, angleZZ,
 
 	initBuffers(player2, player2Colors);
 	gl.cullFace( gl.BACK);
+	gl.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
+
+}
+
+function drawBall(angleXX, angleYY, angleZZ, 
+	sx, sy, sz,
+	tx, ty, tz,
+	mvMatrix,
+	primitiveType){
+
+	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ) );
+	//mvMatrix = mult( mvMatrix, rotationZZMatrix( angleZZ ) );
+	//mvMatrix = mult( mvMatrix, rotationYYMatrix( angleYY ) );
+	//mvMatrix = mult( mvMatrix, rotationXXMatrix( angleXX ) );
+	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
+
+
+	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
+
+	initBuffers(ball, ballColors);
+	gl.cullFace( gl.FRONT);
 	gl.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
 
 }
@@ -459,6 +491,8 @@ function drawScene() {
 	drawPlayer1(angleXX, angleYY, angleZZ, 0.25, 0.25, sz, tx1, ty1, tz1, mvMatrix, primitiveType);
 
 	drawPlayer2(angleXX, angleYY, angleZZ, 0.25, 0.25, sz, tx2, ty2, tz2, mvMatrix, primitiveType);
+	
+	drawBall(angleXX, angleYY, angleZZ, 0.15, 0.15, 0.15, txb, tyb, tzb, mvMatrix, primitiveType);
 		
 	/*drawModel( angleXX, angleYY, angleZZ, 
 	           sx, sy, sz,
@@ -477,36 +511,67 @@ function drawScene() {
 var lastTime = 0;
 
 function animate() {
+
 	
 	var timeNow = new Date().getTime();
+
+	/**
+	 * define boundries here
+	 * all the logic of ball bouncing
+	 */
 	
 	if( lastTime != 0 ) {
 		
 		var elapsed = timeNow - lastTime;
+
+		txb += velocity[0]*velocity_norm;
+		tyb += velocity[1]*velocity_norm;
+		tzb += velocity[2]*velocity_norm;
 		
-		// Global rotation
+		//console.log(velocity);
+		//console.log("x: " + txb);
+		//console.log("y: " + tyb);
+		//console.log("z: " + tzb);
+
+		//console.log(velocity);
+		// ball bouncing top/bottom
+		if(tyb > 0.75)
+		{
+			tyb = 0.75;
+			velocity = computeRefection(velocity, topNorm);
+		}else if(tyb < -0.75)
+		{
+			tyb = -0.75;
+			velocity = computeRefection(velocity, bottomNorm);
+		}
+
+		// ball bouncing left/right
+		if(txb > 0.75)
+		{
+			txb = 0.75;
+			velocity = computeRefection(velocity, rightNorm);
+
+		}else if(txb < -0.75)
+		{
+			txb = -0.75;
+			velocity = computeRefection(velocity, leftNorm);
+		}
+
+		/**
+		 * ball councing front/back
+		 * check if players catch the ball
+		 */
+		if(tzb > 0)
+		{
+			tzb = 0;
+			velocity = computeRefection(velocity, frontNorm);
+
+		}else if(tzb < -2.75)
+		{
+			tzb = -2.75;
+			velocity = computeRefection(velocity, backNorm);
+		}
 		
-		if( globalRotationYY_ON ) {
-
-			globalAngleYY += globalRotationYY_DIR * globalRotationYY_SPEED * (90 * elapsed) / 1000.0;
-	    }
-
-		// Local rotations
-		
-		if( rotationXX_ON ) {
-
-			angleXX += rotationXX_DIR * rotationXX_SPEED * (90 * elapsed) / 1000.0;
-	    }
-
-		if( rotationYY_ON ) {
-
-			angleYY += rotationYY_DIR * rotationYY_SPEED * (90 * elapsed) / 1000.0;
-	    }
-
-		if( rotationZZ_ON ) {
-
-			angleZZ += rotationZZ_DIR * rotationZZ_SPEED * (90 * elapsed) / 1000.0;
-	    }
 	}
 	
 	lastTime = timeNow;
@@ -521,9 +586,10 @@ function tick() {
 	
 	requestAnimFrame(tick);
 	
+	animate();
+	
 	drawScene();
 	
-	//animate();
 }
 
 
@@ -774,48 +840,7 @@ function setEventListeners(){
 	document.getElementById("ZZ-faster-button").onclick = function(){
 		
 		rotationZZ_SPEED *= 1.25;  
-	};      
-
-	document.getElementById("reset-button").onclick = function(){
-		
-		// The initial values
-
-		tx = 0.0;
-
-		ty = 0.0;
-
-		tz = 0.0;
-
-		angleXX = 0.0;
-
-		angleYY = 0.0;
-
-		angleZZ = 0.0;
-
-		sx = 1.0;
-
-		sy = 1.0;
-
-		sz = 1.0;
-		
-		rotationXX_ON = 0;
-		
-		rotationXX_DIR = 1;
-		
-		rotationXX_SPEED = 1;
-
-		rotationYY_ON = 0;
-		
-		rotationYY_DIR = 1;
-		
-		rotationYY_SPEED = 1;
-
-		rotationZZ_ON = 0;
-		
-		rotationZZ_DIR = 1;
-		
-		rotationZZ_SPEED = 1;
-	};      
+	};            
 }
 
 //----------------------------------------------------------------------------
