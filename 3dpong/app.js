@@ -23,10 +23,6 @@ var shaderProgram = null;
 var VertexPositionBuffer = null;	
 var VertexColorBuffer = null;
 
-var player1VertexPositionBuffer = null;
-var player1VertexColorBuffer = null;
-
-var player1x = 0;
 
 // The GLOBAL transformation parameters
 
@@ -38,26 +34,24 @@ var globalTz = 0.0;
 
 // The translation vector
 
-var tx = 0.0;
+var tx1 = 0.0;
+var ty1 = 0.0;
+var tz1 = 0.0;
 
-var ty = 0.0;
-
-var tz = 0.0;
+var tx2 = 0.0;
+var ty2 = 0.0;
+var tz2 = 0.0;
 
 // The rotation angles in degrees
 
 var angleXX = 0.0;
-
 var angleYY = 0.0;
-
 var angleZZ = 0.0;
 
 // The scaling factors
 
 var sx = 1;
-
 var sy = 1;
-
 var sz = 1;
 
 // GLOBAL Animation controls
@@ -222,6 +216,28 @@ function drawPlayer1(angleXX, angleYY, angleZZ,
 	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
 
 	initBuffers(player1, player1Colors);
+	gl.cullFace( gl.BACK);
+	gl.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
+
+}
+
+function drawPlayer2(angleXX, angleYY, angleZZ, 
+	sx, sy, sz,
+	tx, ty, tz,
+	mvMatrix,
+	primitiveType){
+
+	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ) );
+	//mvMatrix = mult( mvMatrix, rotationZZMatrix( angleZZ ) );
+	//mvMatrix = mult( mvMatrix, rotationYYMatrix( angleYY ) );
+	//mvMatrix = mult( mvMatrix, rotationXXMatrix( angleXX ) );
+	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
+
+
+	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
+
+	initBuffers(player2, player2Colors);
 	gl.cullFace( gl.BACK);
 	gl.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
 
@@ -440,7 +456,9 @@ function drawScene() {
 
 	drawGameArea(mvMatrix);
 
-	drawPlayer1(angleXX, angleYY, angleZZ, 0.25, 0.25, sz, tx, ty, tz, mvMatrix, primitiveType);
+	drawPlayer1(angleXX, angleYY, angleZZ, 0.25, 0.25, sz, tx1, ty1, tz1, mvMatrix, primitiveType);
+
+	drawPlayer2(angleXX, angleYY, angleZZ, 0.25, 0.25, sz, tx2, ty2, tz2, mvMatrix, primitiveType);
 		
 	/*drawModel( angleXX, angleYY, angleZZ, 
 	           sx, sy, sz,
@@ -529,22 +547,40 @@ function setEventListeners(){
 	document.addEventListener('keypress', function(event){
 
 		var key = event.keyCode;
+
 		switch(key){
 			case 52:
-				if(tx > -0.75)
-					tx -= 0.05;
+				if(tx1 > -0.75)
+					tx1 -= 0.05;
 				break;
 			case 56:
-				if(ty < 0.75)
-					ty += 0.05;
+				if(ty1 < 0.75)
+					ty1 += 0.05;
 				break;
 			case 54:
-				if(tx < 0.75)
-					tx += 0.05;
+				if(tx1 < 0.75)
+					tx1 += 0.05;
 				break;
 			case 53:
-				if(ty > -0.75)
-					ty -= 0.05;
+				if(ty1 > -0.75)
+					ty1 -= 0.05;
+				break;
+
+			case 97:
+				if(tx2 > -0.75)
+					tx2 -= 0.05;
+				break;
+			case 119:
+				if(ty2 < 0.75)
+					ty2 += 0.05;
+				break;
+			case 100:
+				if(tx2 < 0.75)
+					tx2 += 0.05;
+				break;
+			case 115:
+				if(ty2 > -0.75)
+					ty2 -= 0.05;
 				break;
 		}
 	});
