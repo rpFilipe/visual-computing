@@ -226,7 +226,6 @@ function centroidRefinement( coordsArray,
 //
 
 function moveToSphericalSurface( coordsArray ) {
-	
 	// Each vertex is moved to the spherecial surface of radius 1
     // and centered at (0,0,0)
     
@@ -238,9 +237,7 @@ function moveToSphericalSurface( coordsArray ) {
     for( origIndex = 0; origIndex < arrayLength; origIndex += 3 )
     {
         var v =  coordsArray.slice( origIndex, origIndex + 3 );
-        
         normalize( v );
-        
         var i;
         
         for( i = 0; i < 3; i++ ) {

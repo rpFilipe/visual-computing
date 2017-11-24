@@ -231,6 +231,28 @@ function drawPlayer1(angleXX, angleYY, angleZZ,
 
 }
 
+function drawShadow(angleXX, angleYY, angleZZ, 
+	sx, sy, sz,
+	tx, ty, tz,
+	mvMatrix,
+	primitiveType){
+
+	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ) );
+	//mvMatrix = mult( mvMatrix, rotationZZMatrix( angleZZ ) );
+	//mvMatrix = mult( mvMatrix, rotationYYMatrix( angleYY ) );
+	//mvMatrix = mult( mvMatrix, rotationXXMatrix( angleXX ) );
+	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
+
+
+	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
+
+	initBuffers(shadow, shadowColor);
+	gl.cullFace( gl.FRONT);
+	gl.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
+
+}
+
 function drawPlayer2(angleXX, angleYY, angleZZ, 
 	sx, sy, sz,
 	tx, ty, tz,
@@ -260,15 +282,14 @@ function drawBall(angleXX, angleYY, angleZZ,
 	primitiveType){
 
 	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ) );
-	//mvMatrix = mult( mvMatrix, rotationZZMatrix( angleZZ ) );
-	//mvMatrix = mult( mvMatrix, rotationYYMatrix( angleYY ) );
-	//mvMatrix = mult( mvMatrix, rotationXXMatrix( angleXX ) );
+	// mvMatrix = mult( mvMatrix, rotationZZMatrix( angleZZ ) );
+	// mvMatrix = mult( mvMatrix, rotationYYMatrix( angleYY ) );
+	// mvMatrix = mult( mvMatrix, rotationXXMatrix( angleXX ) );
 	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
 
 
 	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
 	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
-
 	initBuffers(ball, ballColors);
 	gl.cullFace( gl.FRONT);
 	gl.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
@@ -491,7 +512,9 @@ function drawScene() {
 	drawPlayer1(angleXX, angleYY, angleZZ, 0.25, 0.25, sz, tx1, ty1, tz1, mvMatrix, primitiveType);
 
 	drawPlayer2(angleXX, angleYY, angleZZ, 0.25, 0.25, sz, tx2, ty2, tz2, mvMatrix, primitiveType);
-	
+
+	drawShadow(angleXX, angleYY, angleZZ, 0.15, 0.15, 0.15, txb, 0 , tzb, mvMatrix, primitiveType);
+
 	drawBall(angleXX, angleYY, angleZZ, 0.15, 0.15, 0.15, txb, tyb, tzb, mvMatrix, primitiveType);
 		
 	/*drawModel( angleXX, angleYY, angleZZ, 
@@ -651,7 +674,10 @@ function setEventListeners(){
 		}
 	});
 	
-    // Mesh subdivision buttons
+	// aux func
+	document.getElementById("print-ball-matrix").onclick = function(){
+		moveToSphericalSurface(shadow, shadowColor);
+	}
     
     document.getElementById("mid-rec-depth-1-button").onclick = function(){
 		
@@ -907,5 +933,47 @@ function runWebGL() {
 
 	outputInfos();
 }
+
+//funçao q usei p converter a bola para esfera, pode dar jeito dps, antes de entregar APAGAR!
+function moveToSphericalSurface( coordsArray , colors ) {
+	// Each vertex is moved to the spherical surface of radius 1
+    // and centered at (0,0,0)
+    
+    // This is done by handling each vertex as if it were a prosition vector,
+    // and normalizing
+	
+	// TO BE DONE !!
+
+	centroidRefinement( coordsArray, colors, 3 );
+
+	for (var index = 0; index < coordsArray.length; index+=3) {
+		
+		var v = [ coordsArray[index], coordsArray[index+1], coordsArray[index+2]];
+		//console.log(v[0] + " " + v[1] + " "+ v[2]);
+		normalize(v);
+		//console.log(v);
+		coordsArray[index] = v[0];
+		coordsArray[index+1] = v[1];
+		coordsArray[index+2] = v[2];
+	}
+	
+// 	var ball = "var ball = [\n";
+ 	var ball = "var shadow = [\n";
+	for (var index = 0; index < coordsArray.length; index+=3) {
+		ball += coordsArray[index] + "," + coordsArray[index+1] + "," + coordsArray[index+2] + ",\n";
+	}
+	ball += "\n]\n\n";
+	console.log(ball);
+
+
+// 	var colors = "var ballColors = [\n";
+ 	var colors = "var shadowColors = [\n";
+	for (var index = 0; index < ballColors.length; index+=3) {
+		colors += ballColors[index] + "," + ballColors[index+1] + "," + ballColors[index+2] + ",\n";
+	}
+	colors += "\n]";
+	console.log(colors);
+}
+
 
 
