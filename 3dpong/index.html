@@ -90,15 +90,35 @@ COMMENT
 
 <script type="text/javascript" src="app.js"></script>
 
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+
+<link href="bootstrap.min.css" rel="stylesheet">
+
 </head>
 
 <body onload="runWebGL();">
 
-	<div style="text-align: center">
+	<div >
+
+		<div class="row" style="text-align: center">
+
+		<div class="col-3" style="background-color: red">
+			<h1>Player 1</h1>
+			<h3>Controls:</h3>
+			<p>
+			Up: w</br>
+			Down: s</br>
+			Left: a</br>
+			Right: d</br>
+			</p>
+			
+		</div>
+
+		<div class="col-6" style="background-color: blue">
 		
 		<p>Model animation using rotations</p>
 		
-		<canvas id="my-canvas" style="border:1px solid #000000;" width="350" height="350"></canvas>
+		<canvas id="my-canvas" style="border:1px solid #000000;" width="620" height="620"></canvas>
 
 		<br/>
 		<button id="print-ball-matrix">Print and shape shadow Matrix</button>
@@ -168,6 +188,22 @@ COMMENT
 		<button id="reset-button">Reset</button>
 		
 		</p>
+
+		</div>
+
+		<div class="col-3" style="background-color: green">
+			<h1>Player 2</h1>
+			<h3>Controls:</h3>
+			<h2>	8	</h2>
+			<p>
+			Up: 8</br>
+			Down: 5</br>
+			Left: 4</br>
+			Right: 6</br>
+			</p>
+		</div>
+
+		</div>
 				
 	</div>
 
