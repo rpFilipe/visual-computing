@@ -247,7 +247,7 @@ function drawShadow(angleXX, angleYY, angleZZ,
 	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
 	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
 
-	initBuffers(shadow, shadowColor);
+	initBuffers(shadow, shadowColors);
 	gl.cullFace( gl.FRONT);
 	gl.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
 
@@ -640,51 +640,138 @@ function outputInfos(){
 function setEventListeners(){
 
 
-	// player 1 controls
-	document.addEventListener('keypress', function(event){
+	//player 1 controls
+	// document.addEventListener('keypress', function(event){
 
-		var key = event.keyCode;
+	// 	var key = event.keyCode;
 
-		switch(key){
-			case 52:
-				if(tx1 > -0.75)
-					tx1 -= 0.05;
-				break;
-			case 56:
-				if(ty1 < 0.75)
-					ty1 += 0.05;
-				break;
-			case 54:
-				if(tx1 < 0.75)
-					tx1 += 0.05;
-				break;
-			case 53:
-				if(ty1 > -0.75)
-					ty1 -= 0.05;
-				break;
+	// 	switch(key){
+	// 		case 52:
+	// 			if(tx1 > -0.75)
+	// 				tx1 -= 0.05;
+	// 			break;
+	// 		case 56:
+	// 			if(ty1 < 0.75)
+	// 				ty1 += 0.05;
+	// 			break;
+	// 		case 54:
+	// 			if(tx1 < 0.75)
+	// 				tx1 += 0.05;
+	// 			break;
+	// 		case 53:
+	// 			if(ty1 > -0.75)
+	// 				ty1 -= 0.05;
+	// 			break;
 
-			case 97:
-				if(tx2 > -0.75)
-					tx2 -= 0.05;
-				break;
-			case 119:
-				if(ty2 < 0.75)
-					ty2 += 0.05;
-				break;
-			case 100:
-				if(tx2 < 0.75)
-					tx2 += 0.05;
-				break;
-			case 115:
-				if(ty2 > -0.75)
-					ty2 -= 0.05;
-				break;
+	// 		case 97:
+	// 			if(tx2 > -0.75)
+	// 				tx2 -= 0.05;
+	// 			break;
+	// 		case 119:
+	// 			if(ty2 < 0.75)
+	// 				ty2 += 0.05;
+	// 			break;
+	// 		case 100:
+	// 			if(tx2 < 0.75)
+	// 				tx2 += 0.05;
+	// 			break;
+	// 		case 115:
+	// 			if(ty2 > -0.75)
+	// 				ty2 -= 0.05;
+	// 			break;
+	// 	}
+	// });
+
+	var keys = {
+		p1left: false,
+		p1up:    false,
+		p1right: false,
+		p1down:  false,
+		p2left:  false,
+		p2up :  false,
+		p2right:false,
+		p2down: false,
+	};
+	
+	$(document.body).keydown(function(event) {
+	// save status of the button 'pressed' == 'true'
+		if (event.keyCode == 65) {
+			keys["p1left"] = true;
+		} else if (event.keyCode == 87) {
+			keys["p1up"] = true;
+		} else if (event.keyCode == 68) {
+			keys["p1right"] = true;
+		} else if (event.keyCode == 83) {
+			keys["p1down"] = true;
+		} else if (event.keyCode == 52) {
+			keys["p2left"] = true;
+		} else if (event.keyCode == 56) {
+			keys["p2up"] = true;
+		} else if (event.keyCode == 54) {
+			keys["p2right"] = true;
+		} else if (event.keyCode == 53) {
+			keys["p2down"] = true;
+		}
+		if (keys["p1up"]) {
+			if(ty1<0.75)
+				ty1 += 0.05;
+		}
+		if (keys["p1down"]) {
+			if(ty1>-0.75)
+				ty1 -= 0.05;
+		}
+		if (keys["p1right"]) {
+			if(tx1<0.75)
+				tx1 += 0.05;
+		}
+		if (keys["p1left"]) {
+			if(tx1>-0.75)
+				tx1 -= 0.05;
+		}
+
+		if (keys["p2up"]) {
+			if(ty2<0.75)
+				ty2 += 0.05;
+		}
+		if (keys["p2down"]) {
+			if(ty2>-0.75)
+				ty2 -= 0.05;
+		}
+		if (keys["p2right"]) {
+			if(tx2<0.75)
+				tx2 += 0.05;
+		}
+		if (keys["p2left"]) {
+			if(tx2>-0.75)
+				tx2 -= 0.05;
+		}
+
+	});
+	
+	$(document.body).keyup(function(event) {
+		// reset status of the button 'released' == 'false'
+		if (event.keyCode == 65) {
+			keys["p1left"] = false;
+		} else if (event.keyCode == 87) {
+			keys["p1up"] = false;
+		} else if (event.keyCode == 68) {
+			keys["p1right"] = false;
+		} else if (event.keyCode == 83) {
+			keys["p1down"] = false;
+		} else if (event.keyCode == 52) {
+			keys["p2left"] = false;
+		} else if (event.keyCode == 56) {
+			keys["p2up"] = false;
+		} else if (event.keyCode == 54) {
+			keys["p2right"] = false;
+		} else if (event.keyCode == 53) {
+			keys["p2down"] = falses;
 		}
 	});
 	
-	// aux func
+	//aux func
 	document.getElementById("print-ball-matrix").onclick = function(){
-		moveToSphericalSurface(shadow, shadowColor);
+		moveToSphericalSurface(shadow, shadowColors);
 	}
     
     document.getElementById("mid-rec-depth-1-button").onclick = function(){
@@ -727,13 +814,13 @@ function setEventListeners(){
     
     document.getElementById("sphere-surf-button").onclick = function(){
 		
-        moveToSphericalSurface( gameArea );
+        // moveToSphericalSurface( gameArea );
     
-		// NEW --- Computing the triangle normal vector for every vertex
+		// // NEW --- Computing the triangle normal vector for every vertex
 			
-    	computeVertexNormals( gameArea, normals );
+    	// computeVertexNormals( gameArea, normals );
 			
-        initBuffers();
+        // initBuffers();
 
 	};    
 
