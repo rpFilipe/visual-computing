@@ -205,9 +205,11 @@ function drawGameArea(mvMatrix){
 
 	initBuffers(gameArea, gameAreaColors);
 	gl.cullFace( gl.FRONT );
+	gl.disable(gl.BLEND);
 	gl.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems); 
 
 }
+
 
 function drawPlayer1(angleXX, angleYY, angleZZ, 
 	sx, sy, sz,
@@ -215,6 +217,7 @@ function drawPlayer1(angleXX, angleYY, angleZZ,
 	mvMatrix,
 	primitiveType){
 
+		
 	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ) );
 	//mvMatrix = mult( mvMatrix, rotationZZMatrix( angleZZ ) );
 	//mvMatrix = mult( mvMatrix, rotationYYMatrix( angleYY ) );
@@ -226,6 +229,8 @@ function drawPlayer1(angleXX, angleYY, angleZZ,
 	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
 
 	initBuffers(player1, player1Colors);
+	gl.enable(gl.BLEND);
+	gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 	gl.cullFace( gl.BACK);
 	gl.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
 
@@ -246,7 +251,7 @@ function drawShadow(angleXX, angleYY, angleZZ,
 
 	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
 	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
-
+	gl.disable(gl.BLEND);
 	initBuffers(shadow, shadowColors);
 	gl.cullFace( gl.FRONT);
 	gl.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
@@ -268,7 +273,7 @@ function drawPlayer2(angleXX, angleYY, angleZZ,
 
 	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
 	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
-
+	gl.disable(gl.BLEND);
 	initBuffers(player2, player2Colors);
 	gl.cullFace( gl.BACK);
 	gl.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
@@ -290,6 +295,7 @@ function drawBall(angleXX, angleYY, angleZZ,
 
 	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
 	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
+	gl.disable(gl.BLEND);
 	initBuffers(ball, ballColors);
 	gl.cullFace( gl.FRONT);
 	gl.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
@@ -443,7 +449,7 @@ function drawModel( angleXX, angleYY, angleZZ,
 	// Associating the data to the vertex shader
 	
 	// This can be done in a better way !!
-
+	gl.disable(gl.BLEND);
 	initBuffers();
 	
 	// Drawing 
@@ -471,6 +477,7 @@ function drawModel( angleXX, angleYY, angleZZ,
 		
 	}	
 }
+
 
 //----------------------------------------------------------------------------
 
@@ -509,13 +516,15 @@ function drawScene() {
 
 	drawGameArea(mvMatrix);
 
-	drawPlayer1(angleXX, angleYY, angleZZ, 0.25, 0.25, sz, tx1, ty1, tz1, mvMatrix, primitiveType);
+	
 
 	drawPlayer2(angleXX, angleYY, angleZZ, 0.25, 0.25, sz, tx2, ty2, tz2, mvMatrix, primitiveType);
 
 	drawShadow(angleXX, angleYY, angleZZ, 0.15, 0.15, 0.15, txb, -0.849 , tzb, mvMatrix, primitiveType);
 
 	drawBall(angleXX, angleYY, angleZZ, 0.15, 0.15, 0.15, txb, tyb, tzb, mvMatrix, primitiveType);
+
+	drawPlayer1(angleXX, angleYY, angleZZ, 0.25, 0.25, sz, tx1, ty1, tz1, mvMatrix, primitiveType);
 		
 	/*drawModel( angleXX, angleYY, angleZZ, 
 	           sx, sy, sz,
