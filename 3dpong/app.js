@@ -513,7 +513,7 @@ function drawScene() {
 
 	drawPlayer2(angleXX, angleYY, angleZZ, 0.25, 0.25, sz, tx2, ty2, tz2, mvMatrix, primitiveType);
 
-	drawShadow(angleXX, angleYY, angleZZ, 0.15, 0.15, 0.15, txb, 0 , tzb, mvMatrix, primitiveType);
+	drawShadow(angleXX, angleYY, angleZZ, 0.15, 0.15, 0.15, txb, -0.849 , tzb, mvMatrix, primitiveType);
 
 	drawBall(angleXX, angleYY, angleZZ, 0.15, 0.15, 0.15, txb, tyb, tzb, mvMatrix, primitiveType);
 		
@@ -586,13 +586,21 @@ function animate() {
 		 */
 		if(tzb > 0)
 		{
+			console.log("123");
 			tzb = 0;
 			velocity = computeRefection(velocity, frontNorm);
+			velocity[0] = Math.random();
+			velocity[1] = Math.random();
+			console.log(velocity_norm);
+			velocity_norm += 0.01;
 
 		}else if(tzb < -2.75)
 		{
 			tzb = -2.75;
 			velocity = computeRefection(velocity, backNorm);
+			velocity[0] = Math.random();
+			velocity[1] = Math.random();
+			//velocity_norm++;
 		}
 		
 	}
