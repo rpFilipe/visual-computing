@@ -226,7 +226,11 @@ function drawPlayer1(angleXX, angleYY, angleZZ,
 	mvMatrix,
 	primitiveType){
 
-		
+	// mvmatrix2 é para o canvas2
+	var mvMatrix2 = mult( mvMatrix, rotationYYMatrix(180));
+	mvMatrix2 = mult( mvMatrix2, translationMatrix( tx, ty, tz ) );
+	mvMatrix2 = mult( mvMatrix2, scalingMatrix( sx, sy, sz ) );
+	mvMatrix2 = mult( mvMatrix2, translationMatrix( 0, 0, 17 ) );
 	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ) );
 	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
 
@@ -243,11 +247,8 @@ function drawPlayer1(angleXX, angleYY, angleZZ,
 	//canvas2
 
 	var mvUniform = gl2.getUniformLocation(shaderProgram2, "uMVMatrix");
-	gl2.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
-
-	initBuffers(gl2, player1, player1Colors, shaderProgram2);
-	gl2.enable(gl2.BLEND);
-	gl2.blendFunc(gl2.SRC_ALPHA, gl2.ONE);
+	gl2.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));	
+	initBuffers(gl2, player2, player2Colors, shaderProgram2);
 	gl2.cullFace( gl2.BACK);
 	gl2.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
 
@@ -290,7 +291,11 @@ function drawPlayer2(angleXX, angleYY, angleZZ,
 	tx, ty, tz,
 	mvMatrix,
 	primitiveType){
-
+		
+	var mvMatrix2 = mult( mvMatrix, rotationYYMatrix(180));
+	mvMatrix2 = mult( mvMatrix2, translationMatrix( tx, ty, tz ) );
+	mvMatrix2 = mult( mvMatrix2, scalingMatrix( sx, sy, sz ) );
+	mvMatrix2 = mult( mvMatrix2, translationMatrix( 0, 0, 17 ) );
 	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ) );
 	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
 
@@ -305,9 +310,10 @@ function drawPlayer2(angleXX, angleYY, angleZZ,
 	//canvas2
 
 	var mvUniform = gl2.getUniformLocation(shaderProgram2, "uMVMatrix");
-	gl2.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
-	gl2.disable(gl2.BLEND);
-	initBuffers(gl2, player2, player2Colors, shaderProgram2);
+	gl2.enable(gl2.BLEND);
+	gl2.blendFunc(gl2.SRC_ALPHA, gl2.ONE);
+	gl2.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix))); // mvMatrix2 aqui dá bug..
+	initBuffers(gl2, player1, player1Colors, shaderProgram2);
 	gl2.cullFace( gl2.BACK);
 	gl2.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
 
@@ -318,7 +324,10 @@ function drawBall(angleXX, angleYY, angleZZ,
 	tx, ty, tz,
 	mvMatrix,
 	primitiveType){
-
+	var mvMatrix2 = mult( mvMatrix, rotationYYMatrix(180));
+	mvMatrix2 = mult( mvMatrix2, translationMatrix( tx, ty, tz ) );
+	mvMatrix2 = mult( mvMatrix2, scalingMatrix( sx, sy, sz ) );
+	mvMatrix2 = mult( mvMatrix2, translationMatrix( 0, 0, 17 ) );
 	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ) );
 	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
 
@@ -332,7 +341,7 @@ function drawBall(angleXX, angleYY, angleZZ,
 
 	//canvas2
 	var mvUniform = gl2.getUniformLocation(shaderProgram2, "uMVMatrix");
-	gl2.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
+	gl2.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix2)));
 	gl2.disable(gl2.BLEND);
 	initBuffers(gl2, ball, ballColors, shaderProgram2);
 	gl2.cullFace( gl2.FRONT);
@@ -559,14 +568,17 @@ function drawScene() {
 
 	drawGameArea(mvMatrix);
 
-	drawPlayer2(angleXX, angleYY, angleZZ, 0.25, 0.25, sz, tx2, ty2, tz2, mvMatrix, primitiveType);
+	
 
 	drawShadow(angleXX, angleYY, angleZZ, 0.15, 0.15, 0.15, txb, -0.849 , tzb, mvMatrix, primitiveType);
 
 	drawBall(angleXX, angleYY, angleZZ, 0.15, 0.15, 0.15, txb, tyb, tzb, mvMatrix, primitiveType);
 
+	drawPlayer2(angleXX, angleYY, angleZZ, 0.25, 0.25, sz, tx2, ty2, tz2, mvMatrix, primitiveType);
+
 	drawPlayer1(angleXX, angleYY, angleZZ, 0.25, 0.25, sz, tx1, ty1, tz1, mvMatrix, primitiveType);
-		
+	
+	
 	/*drawModel( angleXX, angleYY, angleZZ, 
 	           sx, sy, sz,
 	           tx, ty, tz,
