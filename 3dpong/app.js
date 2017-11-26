@@ -17,8 +17,10 @@
 //
 
 var gl = null; // WebGL context
+var gl2 = null; // WebGL context
 
 var shaderProgram = null;
+var shaderProgram2 = null;
 
 var VertexPositionBuffer = null;	
 var VertexColorBuffer = null;
@@ -162,7 +164,7 @@ var normals = [
 
 // Handling the Vertex and the Color Buffers
 
-function initBuffers(coords, colors) {	
+function initBuffers(gl, coords, colors, shader) {	
 	
 	// Coordinates
 		
@@ -174,11 +176,9 @@ function initBuffers(coords, colors) {
 
 	// Associating to the vertex shader
 	
-	gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 
+	gl.vertexAttribPointer(shader.vertexPositionAttribute, 
 			VertexPositionBuffer.itemSize, 
 			gl.FLOAT, false, 0, 0);
-	
-	// gameAreaColors
 		
 	VertexColorBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, VertexColorBuffer);
@@ -188,7 +188,7 @@ function initBuffers(coords, colors) {
 
 	// Associating to the vertex shader
 	
-	gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, 
+	gl.vertexAttribPointer(shader.vertexColorAttribute, 
 			VertexColorBuffer.itemSize, 
 			gl.FLOAT, false, 0, 0);
 }
@@ -203,11 +203,20 @@ function drawGameArea(mvMatrix){
 	
 	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
 
-	initBuffers(gameArea, gameAreaColors);
+	initBuffers(gl, gameArea, gameAreaColors, shaderProgram);
 	gl.cullFace( gl.FRONT );
 	gl.disable(gl.BLEND);
 	gl.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems); 
 
+	// canvas2
+	var mvUniform = gl2.getUniformLocation(shaderProgram2, "uMVMatrix");
+	
+	gl2.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
+
+	initBuffers(gl2, gameArea, gameAreaColors, shaderProgram2);
+	gl2.cullFace( gl2.FRONT );
+	gl2.disable(gl2.BLEND);
+	gl2.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
 }
 
 
@@ -219,20 +228,28 @@ function drawPlayer1(angleXX, angleYY, angleZZ,
 
 		
 	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ) );
-	//mvMatrix = mult( mvMatrix, rotationZZMatrix( angleZZ ) );
-	//mvMatrix = mult( mvMatrix, rotationYYMatrix( angleYY ) );
-	//mvMatrix = mult( mvMatrix, rotationXXMatrix( angleXX ) );
 	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
 
 
 	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
 	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
 
-	initBuffers(player1, player1Colors);
+	initBuffers(gl, player1, player1Colors, shaderProgram);
 	gl.enable(gl.BLEND);
 	gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 	gl.cullFace( gl.BACK);
 	gl.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
+
+	//canvas2
+
+	var mvUniform = gl2.getUniformLocation(shaderProgram2, "uMVMatrix");
+	gl2.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
+
+	initBuffers(gl2, player1, player1Colors, shaderProgram2);
+	gl2.enable(gl2.BLEND);
+	gl2.blendFunc(gl2.SRC_ALPHA, gl2.ONE);
+	gl2.cullFace( gl2.BACK);
+	gl2.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
 
 }
 
@@ -242,20 +259,30 @@ function drawShadow(angleXX, angleYY, angleZZ,
 	mvMatrix,
 	primitiveType){
 
+	// mvmatrix2 é para o canvas2
+	var mvMatrix2 = mult( mvMatrix, rotationYYMatrix(180));
+	mvMatrix2 = mult( mvMatrix2, translationMatrix( tx, ty, tz ) );
+	mvMatrix2 = mult( mvMatrix2, scalingMatrix( sx, sy, sz ) );
+	mvMatrix2 = mult( mvMatrix2, translationMatrix( 0, 0, 17 ) );
 	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ) );
-	//mvMatrix = mult( mvMatrix, rotationZZMatrix( angleZZ ) );
-	//mvMatrix = mult( mvMatrix, rotationYYMatrix( angleYY ) );
-	//mvMatrix = mult( mvMatrix, rotationXXMatrix( angleXX ) );
 	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
 
 
 	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
 	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
 	gl.disable(gl.BLEND);
-	initBuffers(shadow, shadowColors);
+	initBuffers(gl, shadow, shadowColors, shaderProgram);
 	gl.cullFace( gl.FRONT);
 	gl.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
 
+	//canvas2
+
+	var mvUniform = gl2.getUniformLocation(shaderProgram2, "uMVMatrix");
+	gl2.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix2)));
+	gl2.disable(gl2.BLEND);
+	initBuffers(gl2, shadow, shadowColors, shaderProgram2);
+	gl2.cullFace( gl2.FRONT);
+	gl2.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
 }
 
 function drawPlayer2(angleXX, angleYY, angleZZ, 
@@ -265,18 +292,24 @@ function drawPlayer2(angleXX, angleYY, angleZZ,
 	primitiveType){
 
 	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ) );
-	//mvMatrix = mult( mvMatrix, rotationZZMatrix( angleZZ ) );
-	//mvMatrix = mult( mvMatrix, rotationYYMatrix( angleYY ) );
-	//mvMatrix = mult( mvMatrix, rotationXXMatrix( angleXX ) );
 	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
 
 
 	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
 	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
 	gl.disable(gl.BLEND);
-	initBuffers(player2, player2Colors);
+	initBuffers(gl, player2, player2Colors, shaderProgram);
 	gl.cullFace( gl.BACK);
 	gl.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
+
+	//canvas2
+
+	var mvUniform = gl2.getUniformLocation(shaderProgram2, "uMVMatrix");
+	gl2.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
+	gl2.disable(gl2.BLEND);
+	initBuffers(gl2, player2, player2Colors, shaderProgram2);
+	gl2.cullFace( gl2.BACK);
+	gl2.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
 
 }
 
@@ -287,18 +320,23 @@ function drawBall(angleXX, angleYY, angleZZ,
 	primitiveType){
 
 	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ) );
-	// mvMatrix = mult( mvMatrix, rotationZZMatrix( angleZZ ) );
-	// mvMatrix = mult( mvMatrix, rotationYYMatrix( angleYY ) );
-	// mvMatrix = mult( mvMatrix, rotationXXMatrix( angleXX ) );
 	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
 
 
 	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
 	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
 	gl.disable(gl.BLEND);
-	initBuffers(ball, ballColors);
+	initBuffers(gl, ball, ballColors, shaderProgram);
 	gl.cullFace( gl.FRONT);
 	gl.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
+
+	//canvas2
+	var mvUniform = gl2.getUniformLocation(shaderProgram2, "uMVMatrix");
+	gl2.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
+	gl2.disable(gl2.BLEND);
+	initBuffers(gl2, ball, ballColors, shaderProgram2);
+	gl2.cullFace( gl2.FRONT);
+	gl2.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
 
 }
 
@@ -450,7 +488,7 @@ function drawModel( angleXX, angleYY, angleZZ,
 	
 	// This can be done in a better way !!
 	gl.disable(gl.BLEND);
-	initBuffers();
+	//initBuffers();
 	
 	// Drawing 
 	
@@ -486,16 +524,19 @@ function drawModel( angleXX, angleYY, angleZZ,
 function drawScene() {
 	
 	var pMatrix;
-	
+	var pMatrix2;
+
 	var mvMatrix = mat4();
 	
 	// Clearing the frame-buffer and the depth-buffer
 	
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	gl2.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
 	// Computing the Projection Matrix
 
 	pMatrix = perspective(90, 1, 1, 4.1);
+	//pMatrix2 = perspective(90, 1, 5, 0);
 	// Global transformation !!
 	
 	globalTz = -1;
@@ -505,8 +546,10 @@ function drawScene() {
 	// Passing the Projection Matrix to apply the current projection
 	
 	var pUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
+	var pUniform2 = gl2.getUniformLocation(shaderProgram2, "uPMatrix");
 	
 	gl.uniformMatrix4fv(pUniform, false, new Float32Array(flatten(pMatrix)));
+	gl2.uniformMatrix4fv(pUniform2, false, new Float32Array(flatten(pMatrix)));
 	
 	// GLOBAL TRANSFORMATION FOR THE WHOLE SCENE
 	
@@ -515,8 +558,6 @@ function drawScene() {
 	// Instantianting the current model
 
 	drawGameArea(mvMatrix);
-
-	
 
 	drawPlayer2(angleXX, angleYY, angleZZ, 0.25, 0.25, sz, tx2, ty2, tz2, mvMatrix, primitiveType);
 
@@ -781,196 +822,7 @@ function setEventListeners(){
 	//aux func
 	document.getElementById("print-ball-matrix").onclick = function(){
 		moveToSphericalSurface(shadow, shadowColors);
-	}
-    
-    document.getElementById("mid-rec-depth-1-button").onclick = function(){
-		
-        midPointRefinement( gameArea, gameAreaColors, 1 );
-        
-		// NEW --- Computing the triangle normal vector for every vertex
-			
-		computeVertexNormals( gameArea, normals );
-			
-        initBuffers();
-
-	};
-
-    document.getElementById("mid-rec-depth-2-button").onclick = function(){
-		
-        midPointRefinement( gameArea, gameAreaColors, 2 );
-    
-        // NEW --- Computing the triangle normal vector for every vertex
-			
-	    computeVertexNormals( gameArea, normals );
-			
-        initBuffers();
-
-	};
-
-    document.getElementById("mid-rec-depth-3-button").onclick = function(){
-		
-        midPointRefinement( gameArea, gameAreaColors, 3 );
-    
-		// NEW --- Computing the triangle normal vector for every vertex
-			
-		computeVertexNormals( gameArea, normals );
-			
-        initBuffers();
-
-	};
-
-    // Sphere approximation button
-    
-    document.getElementById("sphere-surf-button").onclick = function(){
-		
-        // moveToSphericalSurface( gameArea );
-    
-		// // NEW --- Computing the triangle normal vector for every vertex
-			
-    	// computeVertexNormals( gameArea, normals );
-			
-        // initBuffers();
-
-	};    
-
-	// Dropdown list
-	
-	var list = document.getElementById("rendering-mode-selection");
-	
-	list.addEventListener("click", function(){
-				
-		// Getting the selection
-		
-		var mode = list.selectedIndex;
-				
-		switch(mode){
-			
-			case 0 : primitiveType = gl.TRIANGLES;
-				break;
-			
-			case 1 : primitiveType = gl.LINE_LOOP;
-				break;
-			
-			case 2 : primitiveType = gl.POINTS;
-				break;
-		}
-	});      
-
-	// Button events
-	
-	document.getElementById("XX-on-off-button").onclick = function(){
-		
-		// Switching on / off
-		
-		if( rotationXX_ON ) {
-			
-			rotationXX_ON = 0;
-		}
-		else {
-			
-			rotationXX_ON = 1;
-		}  
-	};
-
-	document.getElementById("XX-direction-button").onclick = function(){
-		
-		// Switching the direction
-		
-		if( rotationXX_DIR == 1 ) {
-			
-			rotationXX_DIR = -1;
-		}
-		else {
-			
-			rotationXX_DIR = 1;
-		}  
-	};      
-
-	document.getElementById("XX-slower-button").onclick = function(){
-		
-		rotationXX_SPEED *= 0.75;  
-	};      
-
-	document.getElementById("XX-faster-button").onclick = function(){
-		
-		rotationXX_SPEED *= 1.25;  
-	};      
-
-	document.getElementById("YY-on-off-button").onclick = function(){
-		
-		// Switching on / off
-		
-		if( rotationYY_ON ) {
-			
-			rotationYY_ON = 0;
-		}
-		else {
-			
-			rotationYY_ON = 1;
-		}  
-	};
-
-	document.getElementById("YY-direction-button").onclick = function(){
-		
-		// Switching the direction
-		
-		if( rotationYY_DIR == 1 ) {
-			
-			rotationYY_DIR = -1;
-		}
-		else {
-			
-			rotationYY_DIR = 1;
-		}  
-	};      
-
-	document.getElementById("YY-slower-button").onclick = function(){
-		
-		rotationYY_SPEED *= 0.75;  
-	};      
-
-	document.getElementById("YY-faster-button").onclick = function(){
-		
-		rotationYY_SPEED *= 1.25;  
-	};      
-
-	document.getElementById("ZZ-on-off-button").onclick = function(){
-		
-		// Switching on / off
-		
-		if( rotationZZ_ON ) {
-			
-			rotationZZ_ON = 0;
-		}
-		else {
-			
-			rotationZZ_ON = 1;
-		}  
-	};
-
-	document.getElementById("ZZ-direction-button").onclick = function(){
-		
-		// Switching the direction
-		
-		if( rotationZZ_DIR == 1 ) {
-			
-			rotationZZ_DIR = -1;
-		}
-		else {
-			
-			rotationZZ_DIR = 1;
-		}  
-	};      
-
-	document.getElementById("ZZ-slower-button").onclick = function(){
-		
-		rotationZZ_SPEED *= 0.75;  
-	};      
-
-	document.getElementById("ZZ-faster-button").onclick = function(){
-		
-		rotationZZ_SPEED *= 1.25;  
-	};            
+	}        
 }
 
 //----------------------------------------------------------------------------
@@ -978,39 +830,46 @@ function setEventListeners(){
 // WebGL Initialization
 //
 
-function initWebGL( canvas ) {
+function initWebGL(player, canvas ) {
 	try {
-		
-		// Create the WebGL context
-		
-		// Some browsers still need "experimental-webgl"
-		
-		gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
-		
-		// DEFAULT: The viewport occupies the whole canvas 
-		
-		// DEFAULT: The viewport background color is WHITE
-		
-		// NEW - Drawing the triangles defining the model
-		
-		primitiveType = gl.TRIANGLES;
-		
-		// DEFAULT: Face culling is DISABLED
-		
-		// Enable FACE CULLING
-		
-		gl.enable( gl.CULL_FACE );
-		
-		// DEFAULT: The BACK FACE is culled!!
-		
-		// The next instruction is not needed...
-		
-		// To see the inside of the game area
-		gl.cullFace( gl.BACK );
+		if(player == 1){
+			// Create the WebGL context
+			
+			// Some browsers still need "experimental-webgl"
+			
+			gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+			
+			// DEFAULT: The viewport occupies the whole canvas 
+			
+			// DEFAULT: The viewport background color is WHITE
+			
+			// NEW - Drawing the triangles defining the model
+			
+			primitiveType = gl.TRIANGLES;
+			
+			// DEFAULT: Face culling is DISABLED
+			
+			// Enable FACE CULLING
+			
+			gl.enable( gl.CULL_FACE );
+			
+			// DEFAULT: The BACK FACE is culled!!
+			
+			// The next instruction is not needed...
+			
+			// To see the inside of the game area
+			gl.cullFace( gl.BACK );
 
-		// Enable DEPTH-TEST
-		
-		gl.enable( gl.DEPTH_TEST );
+			// Enable DEPTH-TEST
+			
+			gl.enable( gl.DEPTH_TEST );
+		}else{
+			gl2 = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+			primitiveType = gl2.TRIANGLES;
+			gl2.enable( gl2.CULL_FACE );
+			gl2.cullFace( gl2.BACK );
+			gl2.enable( gl2.DEPTH_TEST );
+		}
 		        
 	} catch (e) {
 	}
@@ -1024,10 +883,16 @@ function initWebGL( canvas ) {
 function runWebGL() {
 	
 	var canvas = document.getElementById("my-canvas");
-	
-	initWebGL( canvas );
+	var canvas2 = document.getElementById("canvas2");
+	console.log(canvas2);
+	initWebGL(1, canvas );
+	initWebGL(2, canvas2 );
+	console.log(gl2);
+	console.log(gl2);
 
 	shaderProgram = initShaders( gl );
+
+	shaderProgram2 = initShaders( gl2 );
 	
 	setEventListeners();
 	

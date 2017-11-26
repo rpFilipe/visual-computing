@@ -98,110 +98,44 @@ COMMENT
 
 <body onload="runWebGL();">
 
-	<div >
+	<div>
 
 		<div class="row" style="text-align: center">
 
-		<div class="col-3" style="background-color: red">
-			<h1>Player 1</h1>
-			<h3>Controls:</h3>
-			<p>
-			Up: w</br>
-			Down: s</br>
-			Left: a</br>
-			Right: d</br>
-			</p>
-			
-		</div>
-
-		<div class="col-6" style="background-color: blue">
+		<div class="col-6">
 		
 		<p>Model animation using rotations</p>
 		
-		<canvas id="my-canvas" style="border:1px solid #000000;" width="620" height="620"></canvas>
-
+		<canvas id="my-canvas" style="border:1px solid #000000;" width="350" height="350"></canvas>
+		<h1>Player 1</h1>
+		<h3>Controls:</h3>
+		<p>
+		Up: w</br>
+		Down: s</br>
+		Left: a</br>
+		Right: d</br>
+		</p>
 		<br/>
 		<button id="print-ball-matrix">Print and shape shadow Matrix</button>
 
-		<p>XX rotation: 
-			
-		<button id="XX-on-off-button">On / Off</button>
-
-	    <button id="XX-direction-button">Change Direction</button>
-
-	    <button id="XX-slower-button">Slower</button>
-
-	    <button id="XX-faster-button">Faster</button>
-
-		</p>
-		
-		<p>YY rotation: 
-			
-		<button id="YY-on-off-button">On / Off</button>
-
-	    <button id="YY-direction-button">Change Direction</button>
-
-	    <button id="YY-slower-button">Slower</button>
-
-	    <button id="YY-faster-button">Faster</button>
-
-		</p>
-		
-		<p>ZZ rotation: 
-			
-		<button id="ZZ-on-off-button">On / Off</button>
-
-	    <button id="ZZ-direction-button">Change Direction</button>
-
-	    <button id="ZZ-slower-button">Slower</button>
-
-	    <button id="ZZ-faster-button">Faster</button>
-
-		</p>
-		
-        <p>Choose the <b>rendering mode</b>:
-		
-        <select id="rendering-mode-selection">
-			<option value="0">Filled Triangles</option>
-			<option value="1">Wireframe</option>
-			<option value="2">Vertices</option>
-        </select>
-        
-        <p>Mesh refinement, using <b>edge midpoints</b> --- Choose the <b>recursion depth</b>:
-            
-        <button id="mid-rec-depth-1-button">1</button>
-        
-        <button id="mid-rec-depth-2-button">2</button>
-        
-        <button id="mid-rec-depth-3-button">3</button>
-        
-        </p>
-                
-        <p>Move vertices to ths <b>spherical surface, of radius 1</b>:
-            
-        <button id="sphere-surf-button">Do it!</button>
-        
-        </p>
-		
-        <p>
-		
-		<button id="reset-button">Reset</button>
-		
-		</p>
-
 		</div>
 
-		<div class="col-3" style="background-color: green">
+		<div class="col-6">
+			
+			<p>Model animation using rotations</p>
+			
+			<canvas id="canvas2" style="border:1px solid #000000;" width="350" height="350"></canvas>
 			<h1>Player 2</h1>
 			<h3>Controls:</h3>
-			<h2>	8	</h2>
 			<p>
 			Up: 8</br>
 			Down: 5</br>
 			Left: 4</br>
 			Right: 6</br>
 			</p>
-		</div>
+			<button id="print-ball-matrix">Print and shape shadow Matrix</button>
+	
+			</div>
 
 		</div>
 				
