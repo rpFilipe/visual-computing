@@ -134,6 +134,8 @@ var kSpec = [ 0.7, 0.7, 0.7 ];
 
 var nPhong = 100;
 
+var score_p1 = 0, score_p2 = 0;
+
 
 
 var normals = [
@@ -646,25 +648,46 @@ function animate() {
 		 * ball councing front/back
 		 * check if players catch the ball
 		 */
-		if(tzb > 0)
+		if(tzb > 0 && tzb <50)
 		{
-			console.log("123");
-			tzb = 0;
-			velocity = computeRefection(velocity, frontNorm);
-			velocity[0] = Math.random();
-			velocity[1] = Math.random();
-			console.log(velocity_norm);
-			velocity_norm += 0.01;
-
+			if(((tx1-0.25)<txb && txb<(tx1+0.25)) && ((ty1-0.25)<tyb && tyb<(ty1+0.25))){
+				console.log("pad1 hit")
+				tzb = 0;
+				velocity = computeRefection(velocity, frontNorm);
+				velocity[0] = Math.random();
+				velocity[1] = Math.random();
+				console.log(velocity_norm);
+				//velocity_norm += 0.01;
+			}
+			else{
+				console.log("Game over, p2 won");
+				score_p2++;
+				document.getElementById("p2_score").innerHTML = "Score: " + score_p2;
+				tzb=50;
+				velocity[0]= 0;
+				velocity[1]=0;
+				velocity[2]=0;
+			}
 		}else if(tzb < -2.75)
 		{
-			tzb = -2.75;
-			velocity = computeRefection(velocity, backNorm);
-			velocity[0] = Math.random();
-			velocity[1] = Math.random();
-			//velocity_norm++;
+			if(((tx2-0.25)<txb && txb<(tx2+0.25)) && ((ty2-0.25)<tyb && tyb<(ty2+0.25))){
+				console.log("pad2 hit")
+				tzb = -2.75;
+				velocity = computeRefection(velocity, backNorm);
+				velocity[0] = Math.random();
+				velocity[1] = Math.random();
+				//velocity_norm += 0.01;
+			}
+			else{
+				console.log("Game over, p1 won");
+				score_p1++;
+				document.getElementById("p1_score").innerHTML = "Score: " + score_p1;
+				tzb=50;
+				velocity[0]= 0;
+				velocity[1]=0;
+				velocity[2]=0;
+			}
 		}
-		
 	}
 	
 	lastTime = timeNow;
@@ -827,13 +850,34 @@ function setEventListeners(){
 		} else if (event.keyCode == 54) {
 			keys["p2right"] = false;
 		} else if (event.keyCode == 53) {
-			keys["p2down"] = falses;
+			keys["p2down"] = false;
 		}
 	});
 	
 	//aux func
-	document.getElementById("print-ball-matrix").onclick = function(){
-		moveToSphericalSurface(shadow, shadowColors);
+	// document.getElementById("print-ball-matrix").onclick = function(){
+	// 	moveToSphericalSurface(shadow, shadowColors);
+	// }        
+	document.getElementById("restart").onclick = function(){
+		velocity[0] = Math.random();
+		velocity[1] = Math.random();
+		velocity[2] = 0.5;
+		
+		// The local transformation parameters
+		
+		// The translation vector
+		
+		tx1 = 0.0;
+		ty1 = 0.0;
+		tz1 = 0.0;
+		
+		tx2 = 0.0;
+		ty2 = 0.0;
+		tz2 = 0.0;
+		
+		txb = 0.0;
+		tyb = 0.0;
+		tzb = 2;
 	}        
 }
 
