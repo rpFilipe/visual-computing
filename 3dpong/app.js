@@ -650,7 +650,7 @@ function animate() {
 		 */
 		if(tzb > 0 && tzb <50)
 		{
-			if(((tx1-0.25)<txb && txb<(tx1+0.25)) && ((ty1-0.25)<tyb && tyb<(ty1+0.25))){
+			if(((tx1-0.25)<(txb+1*0.15) && (txb+1*0.15)<(tx1+0.25)) && ((ty1-0.25)<(tyb+1*0.15) && (tyb+1*0.15)<(ty1+0.25))){
 				console.log("pad1 hit")
 				tzb = 0;
 				velocity = computeRefection(velocity, frontNorm);
@@ -670,7 +670,7 @@ function animate() {
 			}
 		}else if(tzb < -2.75)
 		{
-			if(((tx2-0.25)<txb && txb<(tx2+0.25)) && ((ty2-0.25)<tyb && tyb<(ty2+0.25))){
+			if(((tx2-0.25)<(txb+1*0.15) && (txb+1*0.15)<(tx2+0.25)) && ((ty2-0.25)<(tyb+1*0.15) && (tyb+1*0.15)<(ty2+0.25))){
 				console.log("pad2 hit")
 				tzb = -2.75;
 				velocity = computeRefection(velocity, backNorm);
