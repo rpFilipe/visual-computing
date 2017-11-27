@@ -26,7 +26,7 @@ var VertexPositionBuffer = null;
 var VertexColorBuffer = null;
 
 
-
+var paused = false;
 var keys = {
 	p1left: false,
 	p1up:    false,
@@ -677,14 +677,7 @@ function animate() {
 		txb += velocity[0]*velocity_norm;
 		tyb += velocity[1]*velocity_norm;
 		tzb += velocity[2]*velocity_norm;
-		
-		//console.log(velocity);
-		//console.log("x: " + txb);
-		//console.log("y: " + tyb);
-		//console.log("z: " + tzb);
-
-		//console.log(velocity);
-		// ball bouncing top/bottom
+	
 		if(tyb > 0.75)
 		{
 			tyb = 0.75;
@@ -711,44 +704,64 @@ function animate() {
 		 * ball councing front/back
 		 * check if players catch the ball
 		 */
-		if(tzb > 0 && tzb <50)
+		if(tzb > 0)
 		{
-			if(((tx1-0.25)<(txb-1*0.15) && (txb+1*0.15)<(tx1+0.25)) && ((ty1-0.25)<(tyb-1*0.15) && (tyb+1*0.15)<(ty1+0.25))){
-				console.log("pad1 hit");
-				tzb = 0;
-				velocity = computeRefection(velocity, frontNorm);
-				velocity[0] = Math.random();
-				velocity[1] = Math.random();
-				console.log(velocity_norm);
-				//velocity_norm += 0.01;
+			console.log(tx1, ty1);
+			console.log(txb, tyb);
+			//player pad
+			var left = tx1-0.25;
+			var right = tx1+0.25;
+			var bl = txb - 0.15;
+			var br = txb + 0.15;
+
+			console.log(left);
+			console.log("<");
+			console.log(bl);
+
+			console.log(br);
+			console.log("<");
+			console.log(right);
+
+			if((tx1-0.25-0.075)<(txb-0.15) || (txb+0.15)<(tx1+0.25+0.075)){
+				console.log("player1 X correct");
+				if((ty1-0.25-0.075)<(tyb-0.15) && (tyb+0.15)<(ty1+0.25+0.075)){
+					console.log("player1 Y correct");
+					tzb = 0;
+					velocity = computeRefection(velocity, frontNorm);
+					velocity[0] = Math.random();
+					velocity[1] = Math.random();
+					console.log(velocity_norm);
+					velocity_norm += 0.01;
+					}
 			}
 			else{
 				console.log("Game over, p2 won");
 				score_p2++;
 				document.getElementById("p2_score").innerHTML = "Score: " + score_p2;
-				tzb=50;
-				velocity[0]= 0;
-				velocity[1]=0;
-				velocity[2]=0;
+				paused = true;
+				reset();
 			}
 		}else if(tzb < -2.75)
 		{
-			if(((tx2-0.25)<(txb-1*0.15) && (txb+1*0.15)<(tx2+0.25)) && ((ty2-0.25)<(tyb-1*0.15) && (tyb+1*0.15)<(ty2+0.25))){
-				console.log("pad2 hit");
-				tzb = -2.75;
-				velocity = computeRefection(velocity, backNorm);
-				velocity[0] = Math.random();
-				velocity[1] = Math.random();
-				//velocity_norm += 0.01;
+			// player pad
+			console.log(tx2, ty2);
+			console.log(txb, tyb);
+			if((-tx2-0.25-0.075)<(txb-0.15) && (txb+0.15)<(-tx2+0.25+0.075)){
+				if((ty2-0.25-0.075)<(tyb-0.15) && (tyb+0.15)<(ty2+0.25+0.075)){
+					console.log("pad2 hit");
+					tzb = -2.75;
+					velocity = computeRefection(velocity, backNorm);
+					velocity[0] = Math.random();
+					velocity[1] = Math.random();
+					velocity_norm += 0.01;
+				}
 			}
 			else{
 				console.log("Game over, p1 won");
 				score_p1++;
 				document.getElementById("p1_score").innerHTML = "Score: " + score_p1;
-				tzb=50;
-				velocity[0]= 0;
-				velocity[1]=0;
-				velocity[2]=0;
+				paused = true;
+				reset();
 			}
 		}
 	}
@@ -765,8 +778,9 @@ function tick() {
 	
 	requestAnimFrame(tick);
 	
-	animate();
-	
+	if(!paused){
+		animate();
+	}
 	drawScene();
 	
 }
@@ -781,6 +795,30 @@ function tick() {
 
 function outputInfos(){
     
+}
+
+function reset(){
+	velocity_norm = 0.01;
+	velocity = vec3();
+	velocity[0] = Math.random();
+	velocity[1] = Math.random();
+	velocity[2] = 0.5;
+	
+	// The local transformation parameters
+	
+	// The translation vector
+	
+	 tx1 = 0.0;
+	 ty1 = 0.0;
+	 tz1 = 0.0;
+	
+	 tx2 = 0.0;
+	 ty2 = 0.0;
+	 tz2 = 0.0;
+	
+	 txb = 0.0;
+	 tyb = 0.0;
+	 tzb = 2;
 }
 
 //----------------------------------------------------------------------------
@@ -960,11 +998,8 @@ function runWebGL() {
 	getShadow();
 	var canvas = document.getElementById("my-canvas");
 	var canvas2 = document.getElementById("canvas2");
-	console.log(canvas2);
 	initWebGL(1, canvas );
 	initWebGL(2, canvas2 );
-	console.log(gl2);
-	console.log(gl2);
 
 	shaderProgram = initShaders( gl );
 
@@ -995,9 +1030,7 @@ function moveToSphericalSurface( coordsArray , colors ) {
 	for (var index = 0; index < coordsArray.length; index+=3) {
 		
 		var v = [ coordsArray[index], coordsArray[index+1], coordsArray[index+2]];
-		//console.log(v[0] + " " + v[1] + " "+ v[2]);
 		normalize(v);
-		//console.log(v);
 		coordsArray[index] = v[0];
 		coordsArray[index+1] = v[1];
 		coordsArray[index+2] = v[2];
