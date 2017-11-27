@@ -26,6 +26,17 @@ var VertexPositionBuffer = null;
 var VertexColorBuffer = null;
 
 
+
+var keys = {
+	p1left: false,
+	p1up:    false,
+	p1right: false,
+	p1down:  false,
+	p2left:  false,
+	p2up :  false,
+	p2right:false,
+	p2down: false,
+};
 // The GLOBAL transformation parameters
 
 var globalAngleYY = 0.0;
@@ -228,11 +239,7 @@ function drawPlayer1(angleXX, angleYY, angleZZ,
 	mvMatrix,
 	primitiveType){
 
-	// mvmatrix2 é para o canvas2
-	var mvMatrix2 = mult( mvMatrix, rotationYYMatrix(180));
-	mvMatrix2 = mult( mvMatrix2, translationMatrix( tx, ty, tz ) );
-	mvMatrix2 = mult( mvMatrix2, scalingMatrix( sx, sy, sz ) );
-	mvMatrix2 = mult( mvMatrix2, translationMatrix( 0, 0, 17 ) );
+
 	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ) );
 	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
 
@@ -248,12 +255,21 @@ function drawPlayer1(angleXX, angleYY, angleZZ,
 
 	//canvas2
 
-	var mvUniform = gl2.getUniformLocation(shaderProgram2, "uMVMatrix");
-	gl2.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));	
-	initBuffers(gl2, player2, player2Colors, shaderProgram2);
-	gl2.cullFace( gl2.BACK);
-	gl2.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
+}
+function drawPlayer1_canvas2(angleXX, angleYY, angleZZ, 
+	sx, sy, sz,
+	tx, ty, tz,
+	mvMatrix,
+	primitiveType){
 
+		mvMatrix = mult( mvMatrix, translationMatrix( -tx, ty, tz ) );
+		mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
+	
+		var mvUniform = gl2.getUniformLocation(shaderProgram2, "uMVMatrix");
+		gl2.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));	
+		initBuffers(gl2, player2, player2Colors, shaderProgram2);
+		gl2.cullFace( gl2.BACK);
+		gl2.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
 }
 
 function drawShadow(angleXX, angleYY, angleZZ, 
@@ -266,7 +282,7 @@ function drawShadow(angleXX, angleYY, angleZZ,
 	var mvMatrix2 = mult( mvMatrix, rotationYYMatrix(180));
 	mvMatrix2 = mult( mvMatrix2, translationMatrix( tx, ty, tz ) );
 	mvMatrix2 = mult( mvMatrix2, scalingMatrix( sx, sy, sz ) );
-	mvMatrix2 = mult( mvMatrix2, translationMatrix( 0, 0, 17 ) );
+	mvMatrix2 = mult( mvMatrix2, translationMatrix( 0, 0, 18.5 ) );
 	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ) );
 	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
 
@@ -293,12 +309,8 @@ function drawPlayer2(angleXX, angleYY, angleZZ,
 	tx, ty, tz,
 	mvMatrix,
 	primitiveType){
-		
-	var mvMatrix2 = mult( mvMatrix, rotationYYMatrix(180));
-	mvMatrix2 = mult( mvMatrix2, translationMatrix( tx, ty, tz ) );
-	mvMatrix2 = mult( mvMatrix2, scalingMatrix( sx, sy, sz ) );
-	mvMatrix2 = mult( mvMatrix2, translationMatrix( 0, 0, 17 ) );
-	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ) );
+
+	mvMatrix = mult( mvMatrix, translationMatrix( -tx, ty, tz ) );
 	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
 
 
@@ -308,16 +320,27 @@ function drawPlayer2(angleXX, angleYY, angleZZ,
 	initBuffers(gl, player2, player2Colors, shaderProgram);
 	gl.cullFace( gl.BACK);
 	gl.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
+}
 
-	//canvas2
+function drawPlayer2_canvas2(angleXX, angleYY, angleZZ, 
+	sx, sy, sz,
+	tx, ty, tz,
+	mvMatrix,
+	primitiveType){
+		
+		mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ) );
+		mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
 
-	var mvUniform = gl2.getUniformLocation(shaderProgram2, "uMVMatrix");
-	gl2.enable(gl2.BLEND);
-	gl2.blendFunc(gl2.SRC_ALPHA, gl2.ONE);
-	gl2.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix))); // mvMatrix2 aqui dá bug..
-	initBuffers(gl2, player1, player1Colors, shaderProgram2);
-	gl2.cullFace( gl2.BACK);
-	gl2.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
+		//canvas2
+
+		var mvUniform = gl2.getUniformLocation(shaderProgram2, "uMVMatrix");
+		gl2.enable(gl2.BLEND);
+		gl2.blendFunc(gl2.SRC_ALPHA, gl2.ONE);
+		gl2.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix))); // mvMatrix2 aqui dá bug..
+		initBuffers(gl2, player1, player1Colors, shaderProgram2);
+		gl2.cullFace( gl2.BACK);
+		gl2.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
+
 
 }
 
@@ -329,7 +352,7 @@ function drawBall(angleXX, angleYY, angleZZ,
 	var mvMatrix2 = mult( mvMatrix, rotationYYMatrix(180));
 	mvMatrix2 = mult( mvMatrix2, translationMatrix( tx, ty, tz ) );
 	mvMatrix2 = mult( mvMatrix2, scalingMatrix( sx, sy, sz ) );
-	mvMatrix2 = mult( mvMatrix2, translationMatrix( 0, 0, 17 ) );
+	mvMatrix2 = mult( mvMatrix2, translationMatrix( 0, 0, 18.5 ) );
 	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ) );
 	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
 
@@ -579,6 +602,10 @@ function drawScene() {
 	drawPlayer2(angleXX, angleYY, angleZZ, 0.25, 0.25, sz, tx2, ty2, tz2, mvMatrix, primitiveType);
 
 	drawPlayer1(angleXX, angleYY, angleZZ, 0.25, 0.25, sz, tx1, ty1, tz1, mvMatrix, primitiveType);
+
+	drawPlayer1_canvas2(angleXX, angleYY, angleZZ, 0.25, 0.25, sz, tx1, ty1, tz1, mvMatrix, primitiveType);
+
+	drawPlayer2_canvas2(angleXX, angleYY, angleZZ, 0.25, 0.25, sz, tx2, ty2, tz2, mvMatrix, primitiveType);
 	
 	
 	/*drawModel( angleXX, angleYY, angleZZ, 
@@ -594,6 +621,42 @@ function drawScene() {
 //
 
 // Animation --- Updating transformation parameters
+
+function computeMovement(){
+		if (keys["p1up"]) {
+			if(ty1<0.75)
+				ty1 += 0.05;
+		}
+		if (keys["p1down"]) {
+			if(ty1>-0.75)
+				ty1 -= 0.05;
+		}
+		if (keys["p1right"]) {
+			if(tx1<0.75)
+				tx1 += 0.05;
+		}
+		if (keys["p1left"]) {
+			if(tx1>-0.75)
+				tx1 -= 0.05;
+		}
+
+		if (keys["p2up"]) {
+			if(ty2<0.75)
+				ty2 += 0.05;
+		}
+		if (keys["p2down"]) {
+			if(ty2>-0.75)
+				ty2 -= 0.05;
+		}
+		if (keys["p2right"]) {
+			if(tx2<0.75)
+				tx2 += 0.05;
+		}
+		if (keys["p2left"]) {
+			if(tx2>-0.75)
+				tx2 -= 0.05;
+		}
+}
 
 var lastTime = 0;
 
@@ -650,8 +713,8 @@ function animate() {
 		 */
 		if(tzb > 0 && tzb <50)
 		{
-			if(((tx1-0.25)<(txb+1*0.15) && (txb+1*0.15)<(tx1+0.25)) && ((ty1-0.25)<(tyb+1*0.15) && (tyb+1*0.15)<(ty1+0.25))){
-				console.log("pad1 hit")
+			if(((tx1-0.25)<(txb-1*0.15) && (txb+1*0.15)<(tx1+0.25)) && ((ty1-0.25)<(tyb-1*0.15) && (tyb+1*0.15)<(ty1+0.25))){
+				console.log("pad1 hit");
 				tzb = 0;
 				velocity = computeRefection(velocity, frontNorm);
 				velocity[0] = Math.random();
@@ -670,8 +733,8 @@ function animate() {
 			}
 		}else if(tzb < -2.75)
 		{
-			if(((tx2-0.25)<(txb+1*0.15) && (txb+1*0.15)<(tx2+0.25)) && ((ty2-0.25)<(tyb+1*0.15) && (tyb+1*0.15)<(ty2+0.25))){
-				console.log("pad2 hit")
+			if(((tx2-0.25)<(txb-1*0.15) && (txb+1*0.15)<(tx2+0.25)) && ((ty2-0.25)<(tyb-1*0.15) && (tyb+1*0.15)<(ty2+0.25))){
+				console.log("pad2 hit");
 				tzb = -2.75;
 				velocity = computeRefection(velocity, backNorm);
 				velocity[0] = Math.random();
@@ -689,7 +752,7 @@ function animate() {
 			}
 		}
 	}
-	
+	computeMovement();
 	lastTime = timeNow;
 }
 
@@ -767,16 +830,7 @@ function setEventListeners(){
 	// 	}
 	// });
 
-	var keys = {
-		p1left: false,
-		p1up:    false,
-		p1right: false,
-		p1down:  false,
-		p2left:  false,
-		p2up :  false,
-		p2right:false,
-		p2down: false,
-	};
+
 	
 	$(document.body).keydown(function(event) {
 	// save status of the button 'pressed' == 'true'
@@ -797,40 +851,6 @@ function setEventListeners(){
 		} else if (event.keyCode == 75) {
 			keys["p2down"] = true;
 		}
-		if (keys["p1up"]) {
-			if(ty1<0.75)
-				ty1 += 0.05;
-		}
-		if (keys["p1down"]) {
-			if(ty1>-0.75)
-				ty1 -= 0.05;
-		}
-		if (keys["p1right"]) {
-			if(tx1<0.75)
-				tx1 += 0.05;
-		}
-		if (keys["p1left"]) {
-			if(tx1>-0.75)
-				tx1 -= 0.05;
-		}
-
-		if (keys["p2up"]) {
-			if(ty2<0.75)
-				ty2 += 0.05;
-		}
-		if (keys["p2down"]) {
-			if(ty2>-0.75)
-				ty2 -= 0.05;
-		}
-		if (keys["p2right"]) {
-			if(tx2<0.75)
-				tx2 += 0.05;
-		}
-		if (keys["p2left"]) {
-			if(tx2>-0.75)
-				tx2 -= 0.05;
-		}
-
 	});
 	
 	$(document.body).keyup(function(event) {
@@ -937,7 +957,7 @@ function initWebGL(player, canvas ) {
 //----------------------------------------------------------------------------
 
 function runWebGL() {
-	
+	getShadow();
 	var canvas = document.getElementById("my-canvas");
 	var canvas2 = document.getElementById("canvas2");
 	console.log(canvas2);
@@ -969,7 +989,8 @@ function moveToSphericalSurface( coordsArray , colors ) {
 	
 	// TO BE DONE !!
 
-	centroidRefinement( coordsArray, colors, 3 );
+	//centroidRefinement( coordsArray, colors, 3 );
+	
 
 	for (var index = 0; index < coordsArray.length; index+=3) {
 		
@@ -1000,5 +1021,43 @@ function moveToSphericalSurface( coordsArray , colors ) {
 	console.log(colors);
 }
 
+
+function getShadow() {
+	var vertices = [];
+	var varCount = 3;
+	for( var i=0.0;i<360;i++){
+		var j = i / Math.PI *180;
+
+		var vert1 = [
+			Math.sin(j),
+			-1,
+			Math.cos(j),
+		];
+
+		var vert2 = [
+			0,
+			-1,
+			0,
+		];
+		vertices = vertices.concat(vert1);
+		vertices = vertices.concat(vert2);
+	}
+
+	var colors = "var shadow = [\n";
+	for (var index = 0; index < vertices.length; index+=3) {
+		colors += vertices[index] + "," + vertices[index+1] + "," + vertices[index+2] + ",\n";
+	}
+	colors += "\n];";
+	console.log(colors);
+
+	//COLOR MATRIX
+	var colors = "var shadowColors = [\n";
+	for (var index = 0; index < vertices.length; index+=3) {
+		colors += 0 + "," + 0 + "," + 0 + ",\n";
+	}
+	colors += "\n];";
+	console.log(colors);
+
+}
 
 
