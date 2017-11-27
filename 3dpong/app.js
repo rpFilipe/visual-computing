@@ -788,13 +788,13 @@ function setEventListeners(){
 			keys["p1right"] = true;
 		} else if (event.keyCode == 83) {
 			keys["p1down"] = true;
-		} else if (event.keyCode == 52) {
+		} else if (event.keyCode == 74) {
 			keys["p2left"] = true;
-		} else if (event.keyCode == 56) {
+		} else if (event.keyCode == 73) {
 			keys["p2up"] = true;
-		} else if (event.keyCode == 54) {
+		} else if (event.keyCode == 76) {
 			keys["p2right"] = true;
-		} else if (event.keyCode == 53) {
+		} else if (event.keyCode == 75) {
 			keys["p2down"] = true;
 		}
 		if (keys["p1up"]) {
@@ -843,13 +843,13 @@ function setEventListeners(){
 			keys["p1right"] = false;
 		} else if (event.keyCode == 83) {
 			keys["p1down"] = false;
-		} else if (event.keyCode == 52) {
+		} else if (event.keyCode == 74) {
 			keys["p2left"] = false;
-		} else if (event.keyCode == 56) {
+		} else if (event.keyCode == 73) {
 			keys["p2up"] = false;
-		} else if (event.keyCode == 54) {
+		} else if (event.keyCode == 76) {
 			keys["p2right"] = false;
-		} else if (event.keyCode == 53) {
+		} else if (event.keyCode == 75) {
 			keys["p2down"] = false;
 		}
 	});
