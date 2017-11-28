@@ -813,7 +813,7 @@ function reset(){
 	velocity = vec3();
 	velocity[0] = Math.random();
 	velocity[1] = Math.random();
-	velocity[2] = 0.5;
+	(velocity[0] > 0.5) ? velocity[2] = 0.5 : velocity[2] = -0.5;
 	
 	// The local transformation parameters
 	
@@ -829,7 +829,7 @@ function reset(){
 	
 	 txb = 0.0;
 	 tyb = 0.0;
-	 tzb = 2;
+	 tzb = -1.5;
 }
 
 //----------------------------------------------------------------------------
