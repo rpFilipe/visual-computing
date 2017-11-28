@@ -25,8 +25,13 @@ var shaderProgram2 = null;
 var VertexPositionBuffer = null;	
 var VertexColorBuffer = null;
 
+var zhit = [0,0,-0.001, 0,0,-2.99];
+var zhitColors = [1,0,0, 1,0,0];
 
-var paused = false;
+var paused = true;
+var round_itr = 5;
+var round = 1;
+var ball_hit_threshold = 0.075;
 var keys = {
 	p1left: false,
 	p1up:    false,
@@ -47,7 +52,7 @@ var velocity_norm = 0.01;
 var velocity = vec3();
 velocity[0] = Math.random();
 velocity[1] = Math.random();
-velocity[2] = 0.5;
+(velocity[0] > 0.5) ? velocity[2] = 0.5 : velocity[2] = -0.5;
 
 // The local transformation parameters
 
@@ -63,7 +68,7 @@ var tz2 = 0.0;
 
 var txb = 0.0;
 var tyb = 0.0;
-var tzb = 2;
+var tzb = -1.5;
 
 // The rotation angles in degrees
 
@@ -272,6 +277,21 @@ function drawPlayer1_canvas2(angleXX, angleYY, angleZZ,
 		gl2.drawArrays(primitiveType, 0, VertexPositionBuffer.numItems);
 }
 
+function drawZHit(mvMatrix){
+
+		//mvMatrix = mult( mvMatrix, rotationYYMatrix(180));
+		mvMatrix = mult( mvMatrix, translationMatrix( txb, tyb, 0 ) );
+		//mvMatrix = mult( mvMatrix, translationMatrix( 0, 0, 18.5 ) );
+		//mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
+	
+		var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+		gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));	
+		initBuffers(gl, zhit, zhitColors, shaderProgram);
+		gl.cullFace( gl.BACK);
+		gl.drawArrays(gl.LINES, 0, VertexPositionBuffer.numItems);
+
+}
+
 function drawShadow(angleXX, angleYY, angleZZ, 
 	sx, sy, sz,
 	tx, ty, tz,
@@ -282,7 +302,7 @@ function drawShadow(angleXX, angleYY, angleZZ,
 	var mvMatrix2 = mult( mvMatrix, rotationYYMatrix(180));
 	mvMatrix2 = mult( mvMatrix2, translationMatrix( tx, ty, tz ) );
 	mvMatrix2 = mult( mvMatrix2, scalingMatrix( sx, sy, sz ) );
-	mvMatrix2 = mult( mvMatrix2, translationMatrix( 0, 0, 18.5 ) );
+	mvMatrix2 = mult( mvMatrix2, translationMatrix( 0, 0, 19.6 ) );
 	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ) );
 	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
 
@@ -352,7 +372,7 @@ function drawBall(angleXX, angleYY, angleZZ,
 	var mvMatrix2 = mult( mvMatrix, rotationYYMatrix(180));
 	mvMatrix2 = mult( mvMatrix2, translationMatrix( tx, ty, tz ) );
 	mvMatrix2 = mult( mvMatrix2, scalingMatrix( sx, sy, sz ) );
-	mvMatrix2 = mult( mvMatrix2, translationMatrix( 0, 0, 18.5 ) );
+	mvMatrix2 = mult( mvMatrix2, translationMatrix( 0, 0, 19.6 ) );
 	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ) );
 	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
 
@@ -593,8 +613,6 @@ function drawScene() {
 
 	drawGameArea(mvMatrix);
 
-	
-
 	drawShadow(angleXX, angleYY, angleZZ, 0.15, 0.15, 0.15, txb, -0.849 , tzb, mvMatrix, primitiveType);
 
 	drawBall(angleXX, angleYY, angleZZ, 0.15, 0.15, 0.15, txb, tyb, tzb, mvMatrix, primitiveType);
@@ -606,6 +624,8 @@ function drawScene() {
 	drawPlayer1_canvas2(angleXX, angleYY, angleZZ, 0.25, 0.25, sz, tx1, ty1, tz1, mvMatrix, primitiveType);
 
 	drawPlayer2_canvas2(angleXX, angleYY, angleZZ, 0.25, 0.25, sz, tx2, ty2, tz2, mvMatrix, primitiveType);
+
+	//drawZHit(mvMatrix);
 	
 	
 	/*drawModel( angleXX, angleYY, angleZZ, 
@@ -678,25 +698,25 @@ function animate() {
 		tyb += velocity[1]*velocity_norm;
 		tzb += velocity[2]*velocity_norm;
 	
-		if(tyb > 0.75)
+		if(tyb > 0.85)
 		{
-			tyb = 0.75;
+			tyb = 0.85;
 			velocity = computeRefection(velocity, topNorm);
-		}else if(tyb < -0.75)
+		}else if(tyb < -0.85)
 		{
-			tyb = -0.75;
+			tyb = -0.85;
 			velocity = computeRefection(velocity, bottomNorm);
 		}
 
 		// ball bouncing left/right
-		if(txb > 0.75)
+		if(txb > 0.85)
 		{
-			txb = 0.75;
+			txb = 0.85;
 			velocity = computeRefection(velocity, rightNorm);
 
-		}else if(txb < -0.75)
+		}else if(txb < -0.85)
 		{
-			txb = -0.75;
+			txb = -0.85;
 			velocity = computeRefection(velocity, leftNorm);
 		}
 
@@ -706,67 +726,55 @@ function animate() {
 		 */
 		if(tzb > 0)
 		{
-			console.log(tx1, ty1);
-			console.log(txb, tyb);
-			//player pad
-			var left = tx1-0.25;
-			var right = tx1+0.25;
-			var bl = txb - 0.15;
-			var br = txb + 0.15;
-
-			console.log(left);
-			console.log("<");
-			console.log(bl);
-
-			console.log(br);
-			console.log("<");
-			console.log(right);
-
-			if((tx1-0.25-0.075)<(txb-0.15) || (txb+0.15)<(tx1+0.25+0.075)){
-				console.log("player1 X correct");
-				if((ty1-0.25-0.075)<(tyb-0.15) && (tyb+0.15)<(ty1+0.25+0.075)){
-					console.log("player1 Y correct");
+			console.log(round);
+			var bool = (tx1-0.25)<(txb+ball_hit_threshold) && (txb-ball_hit_threshold)<(tx1+0.25) && (ty1-0.25)<(tyb+ball_hit_threshold) && (tyb-ball_hit_threshold)<(ty1+0.25);
+			if(bool){
 					tzb = 0;
-					velocity = computeRefection(velocity, frontNorm);
+					//velocity = computeRefection(velocity, frontNorm);
+					velocity[2] = -0.5;
 					velocity[0] = Math.random();
 					velocity[1] = Math.random();
-					console.log(velocity_norm);
-					velocity_norm += 0.01;
-					}
+					if(round%round_itr == 0)
+						velocity_norm += 0.01;
+					round++;
 			}
 			else{
+				outputInfos(tx1, ty1);
 				console.log("Game over, p2 won");
 				score_p2++;
 				document.getElementById("p2_score").innerHTML = "Score: " + score_p2;
 				paused = true;
+				round = 1;
 				reset();
 			}
-		}else if(tzb < -2.75)
+		}else if(tzb < -2.85)
 		{
-			// player pad
-			console.log(tx2, ty2);
-			console.log(txb, tyb);
-			if((-tx2-0.25-0.075)<(txb-0.15) && (txb+0.15)<(-tx2+0.25+0.075)){
-				if((ty2-0.25-0.075)<(tyb-0.15) && (tyb+0.15)<(ty2+0.25+0.075)){
-					console.log("pad2 hit");
-					tzb = -2.75;
-					velocity = computeRefection(velocity, backNorm);
+			console.log(round);
+			var bool = (-tx2-0.25)<(txb+ball_hit_threshold) && (txb-ball_hit_threshold)<(-tx2+0.25) && (ty2-0.25)<(tyb+ball_hit_threshold) && (tyb-ball_hit_threshold)<(ty2+0.25);
+			if(bool){
+					tzb = -2.85;
+					//velocity = computeRefection(velocity, backNorm);
+					velocity[2] = 0.5;
 					velocity[0] = Math.random();
 					velocity[1] = Math.random();
-					velocity_norm += 0.01;
-				}
+					if(round%round_itr == 0)
+						velocity_norm += 0.01;
+					round++;
 			}
 			else{
+				outputInfos(-tx2, ty2);
 				console.log("Game over, p1 won");
 				score_p1++;
 				document.getElementById("p1_score").innerHTML = "Score: " + score_p1;
 				paused = true;
+				round = 1;
 				reset();
 			}
 		}
 	}
-	computeMovement();
 	lastTime = timeNow;
+	computeMovement();
+	//console.log("ball position:(" + txb + ", " + tyb + ", " +tzb);
 }
 
 
@@ -793,7 +801,10 @@ function tick() {
 //  User Interaction
 //
 
-function outputInfos(){
+function outputInfos(tx, ty){
+
+	console.log("player position: (" + tx + ", " + ty);
+	console.log("ball position: (" + txb + ", " + tyb);
     
 }
 
@@ -888,6 +899,8 @@ function setEventListeners(){
 			keys["p2right"] = true;
 		} else if (event.keyCode == 75) {
 			keys["p2down"] = true;
+		} else if(event.keyCode == 32){
+			paused = false;
 		}
 	});
 	
@@ -915,28 +928,7 @@ function setEventListeners(){
 	//aux func
 	// document.getElementById("print-ball-matrix").onclick = function(){
 	// 	moveToSphericalSurface(shadow, shadowColors);
-	// }        
-	document.getElementById("restart").onclick = function(){
-		velocity[0] = Math.random();
-		velocity[1] = Math.random();
-		velocity[2] = 0.5;
-		
-		// The local transformation parameters
-		
-		// The translation vector
-		
-		tx1 = 0.0;
-		ty1 = 0.0;
-		tz1 = 0.0;
-		
-		tx2 = 0.0;
-		ty2 = 0.0;
-		tz2 = 0.0;
-		
-		txb = 0.0;
-		tyb = 0.0;
-		tzb = 2;
-	}        
+	// }       
 }
 
 //----------------------------------------------------------------------------
@@ -1042,7 +1034,7 @@ function moveToSphericalSurface( coordsArray , colors ) {
 		ball += coordsArray[index] + "," + coordsArray[index+1] + "," + coordsArray[index+2] + ",\n";
 	}
 	ball += "\n]\n\n";
-	console.log(ball);
+	//console.log(ball);
 
 
 // 	var colors = "var ballColors = [\n";
@@ -1051,7 +1043,7 @@ function moveToSphericalSurface( coordsArray , colors ) {
 		colors += ballColors[index] + "," + ballColors[index+1] + "," + ballColors[index+2] + ",\n";
 	}
 	colors += "\n]";
-	console.log(colors);
+	//console.log(colors);
 }
 
 
@@ -1081,7 +1073,7 @@ function getShadow() {
 		colors += vertices[index] + "," + vertices[index+1] + "," + vertices[index+2] + ",\n";
 	}
 	colors += "\n];";
-	console.log(colors);
+	//console.log(colors);
 
 	//COLOR MATRIX
 	var colors = "var shadowColors = [\n";
@@ -1089,7 +1081,7 @@ function getShadow() {
 		colors += 0 + "," + 0 + "," + 0 + ",\n";
 	}
 	colors += "\n];";
-	console.log(colors);
+	//console.log(colors);
 
 }
 

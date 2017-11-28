@@ -727,7 +727,7 @@ function subVectors(v1, v2){
 }
 
 function computeRefection(vector, planeNormal){
-    normalize(vector);
+    //normalize(vector);
     normalize(planeNormal);
     var dp = dotProduct(vector, planeNormal);
     dp = dp * 2;
