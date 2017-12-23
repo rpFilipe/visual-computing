@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 2.8)
+project( Aulas_CV )
+find_package( OpenCV REQUIRED )
+add_executable( parkingdetection parkinglot.cpp )
+target_link_libraries( parkingdetection ${OpenCV_LIBS} )
