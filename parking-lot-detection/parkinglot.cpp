@@ -23,7 +23,6 @@
 #include "opencv2/objdetect/objdetect.hpp"
 #include "opencv2/core/core.hpp"
 #include <vector>
-#include "opencv2/core/utility.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 
 #include "opencv2/highgui/highgui.hpp"
@@ -40,6 +39,7 @@ void cHoughLines(cv::Mat img);
 void cascadeClassifier(cv::Mat workingFrame);
 void applyCLAHE(Mat srcArry, int clim);
 void increace_contrast(cv::Mat const &image, double alpha, int beta);
+void foo(Mat newFrame, double alpha, int beta);
 
 CascadeClassifier cars_cascade;
 
@@ -104,6 +104,9 @@ int main( int argc, char** argv )
                 break;
 
         case 5: increace_contrast(frame, 2, 0);
+                break;
+        case 6: foo(frame, 2 ,2 );
+                break;
 
 
     }
@@ -179,17 +182,23 @@ void cHoughLines(Mat newFrame){
 
 void identify_ob_by_edges(cv::Mat const &img)
 {
+    int borderSize = 1;
+    Mat a ;
+
+    cv::copyMakeBorder(img, a, borderSize, borderSize,
+               borderSize, borderSize, BORDER_CONSTANT, Scalar(255 ,255 , 255));
+
     cv::Mat gray;
     //cv::pyrMeanShiftFiltering(img,gray,10,10);
-    cv::cvtColor(img, gray, CV_BGR2GRAY);
+    cv::cvtColor(a, gray, CV_BGR2GRAY);
     cv::threshold(gray, gray, 0, 255, cv::THRESH_BINARY + cv::THRESH_OTSU);
-    auto const kernel = cv::getStructuringElement(cv::MORPH_RECT, {3,3});
+    auto const kernel = cv::getStructuringElement(cv::MORPH_RECT, {1,1});
     cv::dilate(gray, gray, kernel);
 
     std::vector<std::vector<cv::Point>> contours;
     cv::findContours(gray.clone(), contours, cv::RETR_TREE,
                      cv::CHAIN_APPROX_SIMPLE);
-    cv::Mat img_copy = img.clone();
+    cv::Mat img_copy = a.clone();
     for(auto const &contour : contours){
         auto const rect = cv::boundingRect(contour);
         if(rect.area() >= 7000 && rect.area() < 30000 ){
@@ -271,25 +280,56 @@ void enchance_ground(Mat const &frame){
 }
 
 void increace_contrast(cv::Mat const &image, double alpha, int beta){
-     
+
     /// Read image given by user
- Mat new_image = Mat::zeros( image.size(), image.type() );
+    Mat new_image = Mat::zeros( image.size(), image.type() );
 
- /// Do the operation new_image(i,j) = alpha*image(i,j) + beta
- for( int y = 0; y < image.rows; y++ )
-    { for( int x = 0; x < image.cols; x++ )
-         { for( int c = 0; c < 3; c++ )
-              {
-      new_image.at<Vec3b>(y,x)[c] =
-         saturate_cast<uchar>( alpha*( image.at<Vec3b>(y,x)[c] ) + beta );
-             }
-    }
-    }
+     /// Do the operation new_image(i,j) = alpha*image(i,j) + beta
+     for( int y = 0; y < image.rows; y++ )
+        { for( int x = 0; x < image.cols; x++ )
+             { for( int c = 0; c < 3; c++ )
+                  {
+          new_image.at<Vec3b>(y,x)[c] =
+             saturate_cast<uchar>( alpha*( image.at<Vec3b>(y,x)[c] ) + beta );
+                 }
+        }
+        }
 
- /// Create Windows
- namedWindow("New Image", 1);
+     /// Create Windows
+     namedWindow("New Image", 1);
 
- /// Show stuff
- //imshow("New Image", new_image);
- identify_ob_by_edges(new_image);
+     /// Show stuff
+     //imshow("New Image", new_image);
+     identify_ob_by_edges(new_image);
+}
+
+
+void foo(Mat newFrame, double alpha, int beta){
+    Mat cdst;
+    Mat cdstP;
+    Mat workingFrame;
+
+        /// Read image given by user
+    Mat new_image = Mat::zeros( newFrame.size(), newFrame.type() );
+
+     /// Do the operation new_image(i,j) = alpha*image(i,j) + beta
+     for( int y = 0; y < newFrame.rows; y++ )
+        { for( int x = 0; x < newFrame.cols; x++ )
+             { for( int c = 0; c < 3; c++ )
+                  {
+          new_image.at<Vec3b>(y,x)[c] =
+             saturate_cast<uchar>( alpha*( newFrame.at<Vec3b>(y,x)[c] ) + beta );
+                 }
+        }
+        }
+
+     /// Create Windows
+
+  // Edge detection
+    Canny(new_image, workingFrame, 50, 200, 3);
+    // Copy edges to the images that will display the results in BGR
+    cvtColor(workingFrame, cdst, COLOR_GRAY2BGR);
+    cdstP = cdst.clone();
+
+     identify_ob_by_edges(cdstP);
 }
