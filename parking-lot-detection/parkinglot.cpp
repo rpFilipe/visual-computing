@@ -32,6 +32,7 @@
 using namespace cv;
 using namespace std;
 void identify_ob_by_edges(cv::Mat const &img);
+void identify_ob_by_edges_yellow(cv::Mat const &img);
 void enchance_ground(cv::Mat const &img, cv::Mat &result);
 void cHoughLines(cv::Mat img);
 
@@ -49,7 +50,7 @@ int main( int argc, char** argv )
 	// Open Camera or Video	File
 	VideoCapture cap;
     cap.open(videoFilename);
-
+    
 
 	if (!cap.isOpened())
 	{
@@ -57,8 +58,8 @@ int main( int argc, char** argv )
 		return -1;
 	}
 	
-	const unsigned long int total_frames = cap.get(CAP_PROP_FRAME_COUNT);
-	Size videoSize = Size((int)cap.get(CAP_PROP_FRAME_WIDTH), (int)cap.get(CAP_PROP_FRAME_HEIGHT));
+	const unsigned long int total_frames = cap.get(CV_CAP_PROP_FRAME_COUNT);
+	Size videoSize = Size((int)cap.get(CV_CAP_PROP_FRAME_WIDTH), (int)cap.get(CV_CAP_PROP_FRAME_HEIGHT));
 	
 	  while(1){
  
@@ -78,21 +79,24 @@ int main( int argc, char** argv )
 	//chance size so windows can be more maneuverable
 	resize(frame, frame, Size(640, 480), 0, 0, CV_INTER_LINEAR);
 
-    enchance_ground(frame, workingFrame);
+    //enchance_ground(frame, workingFrame);
     //cvtColor( workingFrame, workingFrame, cv::COLOR_RGB2GRAY );
 
     //auto const kernel = cv::getStructuringElement(cv::MORPH_RECT, {3,3});
     //cv::dilate(workingFrame, workingFrame, kernel);
 
 
-    identify_ob_by_edges(workingFrame);
+    identify_ob_by_edges(frame);
 
-    cv::imshow("Betther Ground", workingFrame);
+    
+        
+    //cv::imshow("Betther Ground", workingFrame);
     
 
     //cvtColor(frame, workingFrame, cv::COLOR_RGB2GRAY);
     
-    //cHoughLines(workingFrame);
+    cHoughLines(frame);
+
 
     //lines = cv2.HoughLinesP(edges,1,np.pi/180,40,minLineLength=30,maxLineGap=30)
     //threshold( workingFrame, workingFrame, 180,255,THRESH_BINARY );
@@ -150,12 +154,16 @@ void cHoughLines(Mat workingFrame){
     for( size_t i = 0; i < linesP.size(); i++ )
     {
         Vec4i l = linesP[i];
-        line( cdstP, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,0,255), 3, LINE_AA);
+        line( cdstP, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,0,255), 3, CV_AA);
     }
     
     imshow("Detected Lines (in red) - Standard Hough Line Transform", cdst);
     imshow("Detected Lines (in red) - Probabilistic Line Transform", cdstP);
     
+}
+
+void test(cv::Mat const &img){
+
 }
 
 void identify_ob_by_edges(cv::Mat const &img)
@@ -172,12 +180,12 @@ void identify_ob_by_edges(cv::Mat const &img)
     cv::Mat img_copy = img.clone();
     for(auto const &contour : contours){
         auto const rect = cv::boundingRect(contour);
-        if(rect.area() >= 2000){
+        if(rect.area() >= 2500 && rect.area() < 10000 ){
             cv::rectangle(img_copy, rect, {255, 0, 0}, 3);
         }
     }
 
-    cv::imshow("binarize", gray);
+    //cv::imshow("binarize", gray);
     cv::imshow("color", img_copy);
     //cv::waitKey();
     cv::imwrite("result.jpg", img_copy);
