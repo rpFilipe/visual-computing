@@ -32,14 +32,13 @@
 
 using namespace cv;
 using namespace std;
-void identify_ob_by_edges(cv::Mat const &img);
-void identify_ob_by_edges_yellow(cv::Mat const &img);
-void enchance_ground(cv::Mat const &img);
-void cHoughLines(cv::Mat img);
-void cascadeClassifier(cv::Mat workingFrame);
-void applyCLAHE(Mat srcArry, int clim);
-void increace_contrast(cv::Mat const &image, double alpha, int beta);
-void foo(Mat newFrame, double alpha, int beta);
+void identify_ob_by_edges(cv::Mat const &img, cv::Mat &result);
+void enchance_ground(cv::Mat const &img, cv::Mat &result);
+void cHoughLines(cv::Mat const &img, cv::Mat &result0, cv::Mat &result1);
+void cascadeClassifier(cv::Mat const &img, cv::Mat &result);
+void applyCLAHE(cv::Mat const &img, int clim, cv::Mat &result);
+void increace_contrast(cv::Mat const &image, double alpha, int beta, cv::Mat &result);
+void foo(cv::Mat const &img, double alpha, int beta, cv::Mat &result);
 
 CascadeClassifier cars_cascade;
 
@@ -53,6 +52,7 @@ int main( int argc, char** argv )
     }
 
     int method = atoi(argv[2]);
+    string smethod = "";
     const string videoFilename = argv[1];	 
     cars_cascade.load("cars2.xml");       
 	
@@ -74,6 +74,7 @@ int main( int argc, char** argv )
  
     Mat frame;
     Mat workingFrame;
+    Mat workingFrame1;
     Mat dilationElement;
 
     // Capture frame-by-frame
@@ -91,21 +92,28 @@ int main( int argc, char** argv )
 
     switch(method){
 
-        case 0: enchance_ground(frame);
+        case 0: enchance_ground(frame, workingFrame);
+        smethod = "";
                 break;
-        case 1: identify_ob_by_edges(frame);
+        case 1: identify_ob_by_edges(frame, workingFrame);
+        smethod = "identify_ob_by_edges";
                 break;
-        case 2: cHoughLines(frame);
+        case 2: cHoughLines(frame, workingFrame, workingFrame1);
+        smethod = "cHoughLines";
                 break;   
-        case 3: cascadeClassifier(frame);
+        case 3: cascadeClassifier(frame, workingFrame);
+        smethod = "cascadeClassifier";
                 break;
 
-        case 4: applyCLAHE(frame, 4);
+        case 4: applyCLAHE(frame, 4, workingFrame);
+        smethod = "applyCLAHE";
                 break;
 
-        case 5: increace_contrast(frame, 2, 0);
+        case 5: increace_contrast(frame, 2, 0, workingFrame);
+        smethod = "increace_contrast";
                 break;
-        case 6: foo(frame, 2 ,2 );
+        case 6: foo(frame, 2 ,2 , workingFrame);
+        smethod = "foo";
                 break;
 
 
@@ -124,7 +132,7 @@ int main( int argc, char** argv )
     
     
     imshow( "Original", frame );
-    //imshow( "Processed", workingFrame );
+    imshow( smethod, workingFrame );
  
     // Press  ESC on keyboard to exit
     char c=(char)waitKey(25);
@@ -140,11 +148,10 @@ int main( int argc, char** argv )
      
   return 0;
 }
-void cHoughLines(Mat newFrame){
-	Mat cdst;
-    Mat cdstP;
+void cHoughLines(cv::Mat const &newFrame, cv::Mat &cdst, cv::Mat &cdstP){
+
     Mat workingFrame;
-  // Edge detection
+    // Edge detection
     Canny(newFrame, workingFrame, 50, 200, 3);
     // Copy edges to the images that will display the results in BGR
     cvtColor(workingFrame, cdst, COLOR_GRAY2BGR);
@@ -175,12 +182,12 @@ void cHoughLines(Mat newFrame){
         line( cdstP, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,0,255), 3, CV_AA);
     }
     
-    imshow("Detected Lines (in red) - Standard Hough Line Transform", cdst);
-    imshow("Detected Lines (in red) - Probabilistic Line Transform", cdstP);
+    //imshow("Detected Lines (in red) - Standard Hough Line Transform", cdst);
+    //imshow("Detected Lines (in red) - Probabilistic Line Transform", cdstP);
     
 }
 
-void identify_ob_by_edges(cv::Mat const &img)
+void identify_ob_by_edges(cv::Mat const &img, cv::Mat &result)
 {
     int borderSize = 1;
     Mat a ;
@@ -198,28 +205,29 @@ void identify_ob_by_edges(cv::Mat const &img)
     std::vector<std::vector<cv::Point>> contours;
     cv::findContours(gray.clone(), contours, cv::RETR_TREE,
                      cv::CHAIN_APPROX_SIMPLE);
-    cv::Mat img_copy = a.clone();
+    result = a.clone();
     for(auto const &contour : contours){
         auto const rect = cv::boundingRect(contour);
         if(rect.area() >= 7000 && rect.area() < 30000 ){
-            cv::rectangle(img_copy, rect, {255, 0, 0}, 3);
+            cv::rectangle(result, rect, {255, 0, 0}, 3);
         }
     }
 
-    cv::imshow("binarize", gray);
-    cv::imshow("color", img_copy);
+    //cv::imshow("binarize", gray);
+    //cv::imshow("color", img_copy);
     //cv::imwrite("result.jpg", img_copy);
 }
 
-void applyCLAHE(Mat frame, int clim) { 
+void applyCLAHE(cv::Mat const &img, int clim, cv::Mat &result) { 
     //Function that applies the CLAHE algorithm to "dstArry".
     // READ RGB color image and convert it to Lab
-    cv::Mat lab_image;
-    cv::cvtColor(frame, lab_image, CV_BGR2Lab);
+    result = img.clone();
+
+    cv::cvtColor(img, result, CV_BGR2Lab);
 
     // Extract the L channel
     std::vector<cv::Mat> lab_planes(3);
-    cv::split(lab_image, lab_planes);  // now we have the L image in lab_planes[0]
+    cv::split(result, lab_planes);  // now we have the L image in lab_planes[0]
 
     // apply the CLAHE algorithm to the L channel
     cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE();
@@ -229,41 +237,41 @@ void applyCLAHE(Mat frame, int clim) {
 
     // Merge the the color planes back into an Lab image
     dst.copyTo(lab_planes[0]);
-    cv::merge(lab_planes, lab_image);
+    cv::merge(lab_planes, result);
 
    // convert back to RGB
    cv::Mat image_clahe;
-   cv::cvtColor(lab_image, image_clahe, CV_Lab2BGR);
+   cv::cvtColor(result, image_clahe, CV_Lab2BGR);
 
    // display the results  (you might also want to see lab_planes[0] before and after).
-   cv::imshow("image CLAHE", lab_planes);
+   //cv::imshow("image CLAHE", lab_planes);
 }
 
-void cascadeClassifier(Mat frame_gray){
+void cascadeClassifier(cv::Mat const &img, cv::Mat &result){
     
         std::vector<Rect> cars;
-        Mat workingFrame = frame_gray.clone();
+        result = img.clone();
     
     
-        cars_cascade.detectMultiScale(workingFrame, cars, 1.1, 1);
+        cars_cascade.detectMultiScale(result, cars, 1.1, 1);
     
         for (auto& car : cars){
-            rectangle(workingFrame, Rect(car.x,car.y, car.x+car.width,car.y+car.height), {0,0,255}, 2);
+            rectangle(result, Rect(car.x,car.y, car.x+car.width,car.y+car.height), {0,0,255}, 2);
              
         }
     
-        imshow("test", workingFrame);
+       // imshow("test", workingFrame);
     }
 
-void enchance_ground(Mat const &frame){
-    Mat result = frame.clone();
+void enchance_ground(cv::Mat const &img, cv::Mat &result){
+    result = img.clone();
     unsigned int threshold = 30;
     bool ground = false;
-    for(int c = 0; c < frame.cols; c++){
-        for(int r = 0; r < frame.rows; r++){
-            ground = (frame.at<cv::Vec3b>(r,c)[0] + threshold > 172) && (frame.at<cv::Vec3b>(r,c)[0] - threshold < 172);
-            ground = ground && (frame.at<cv::Vec3b>(r,c)[1] + threshold > 170) && (frame.at<cv::Vec3b>(r,c)[1] - threshold < 170);
-            ground = ground && (frame.at<cv::Vec3b>(r,c)[2] + threshold > 157) && (frame.at<cv::Vec3b>(r,c)[2] - threshold < 157);
+    for(int c = 0; c < img.cols; c++){
+        for(int r = 0; r < img.rows; r++){
+            ground = (img.at<cv::Vec3b>(r,c)[0] + threshold > 172) && (img.at<cv::Vec3b>(r,c)[0] - threshold < 172);
+            ground = ground && (img.at<cv::Vec3b>(r,c)[1] + threshold > 170) && (img.at<cv::Vec3b>(r,c)[1] - threshold < 170);
+            ground = ground && (img.at<cv::Vec3b>(r,c)[2] + threshold > 157) && (img.at<cv::Vec3b>(r,c)[2] - threshold < 157);
 
             if(ground){
                 result.at<cv::Vec3b>(r, c) = {255,255,255}; 
@@ -279,7 +287,7 @@ void enchance_ground(Mat const &frame){
     //cvtColor(frame, result, CV_BGR2GRAY);
 }
 
-void increace_contrast(cv::Mat const &image, double alpha, int beta){
+void increace_contrast(cv::Mat const &image, double alpha, int beta, cv::Mat &result){
 
     /// Read image given by user
     Mat new_image = Mat::zeros( image.size(), image.type() );
@@ -300,25 +308,25 @@ void increace_contrast(cv::Mat const &image, double alpha, int beta){
 
      /// Show stuff
      //imshow("New Image", new_image);
-     identify_ob_by_edges(new_image);
+     identify_ob_by_edges(new_image, result);
 }
 
 
-void foo(Mat newFrame, double alpha, int beta){
+void foo(cv::Mat const&img, double alpha, int beta, cv::Mat &result){
     Mat cdst;
     Mat cdstP;
     Mat workingFrame;
 
-        /// Read image given by user
-    Mat new_image = Mat::zeros( newFrame.size(), newFrame.type() );
+    // Read image given by user
+    Mat new_image = Mat::zeros( img.size(), img.type() );
 
      /// Do the operation new_image(i,j) = alpha*image(i,j) + beta
-     for( int y = 0; y < newFrame.rows; y++ )
-        { for( int x = 0; x < newFrame.cols; x++ )
+     for( int y = 0; y < img.rows; y++ )
+        { for( int x = 0; x < img.cols; x++ )
              { for( int c = 0; c < 3; c++ )
                   {
           new_image.at<Vec3b>(y,x)[c] =
-             saturate_cast<uchar>( alpha*( newFrame.at<Vec3b>(y,x)[c] ) + beta );
+             saturate_cast<uchar>( alpha*( img.at<Vec3b>(y,x)[c] ) + beta );
                  }
         }
         }
@@ -331,5 +339,5 @@ void foo(Mat newFrame, double alpha, int beta){
     cvtColor(workingFrame, cdst, COLOR_GRAY2BGR);
     cdstP = cdst.clone();
 
-     identify_ob_by_edges(cdstP);
+     identify_ob_by_edges(cdstP, result);
 }
