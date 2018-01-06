@@ -32,15 +32,19 @@
 
 using namespace cv;
 using namespace std;
-void identify_ob_by_edges(cv::Mat const &img, cv::Mat &result);
+vector<vector<Point>> getEdges(cv::Mat const &img);
+void makeBinary(cv::Mat const &img, cv::Mat &result);
+void makeBoder(cv::Mat &img, int borderSize);
 void enchance_ground(cv::Mat const &img, cv::Mat &result);
-void cHoughLines(cv::Mat const &img, cv::Mat &result0, cv::Mat &result1);
+void cHoughLines(cv::Mat const &img, cv::Mat &result0, cv::Mat &result1, int minLineLength, int maxLineGap);
 void cascadeClassifier(cv::Mat const &img, cv::Mat &result);
 void applyCLAHE(cv::Mat const &img, int clim, cv::Mat &result);
 void increace_contrast(cv::Mat const &image, double alpha, int beta, cv::Mat &result);
 void foo(cv::Mat const &img, double alpha, int beta, cv::Mat &result);
+void foo2(cv::Mat const &img, double alpha, int beta, cv::Mat &result);
 
 CascadeClassifier cars_cascade;
+Mat original;
 
 int main( int argc, char** argv )
 {
@@ -72,56 +76,57 @@ int main( int argc, char** argv )
 	
 	  while(1){
  
-    Mat frame;
     Mat workingFrame;
     Mat workingFrame1;
     Mat dilationElement;
 
     // Capture frame-by-frame
-    cap >> frame;
+    cap >> original;
 
     // If the frame is empty, break immediately
-    if (frame.empty())
+    if (original.empty())
         break;
 	int morphSize = 3;
 
       
 	//chance size so windows can be more maneuverable
-    resize(frame, frame, Size(640, 480), 0, 0, CV_INTER_LINEAR);
+    resize(original, original, Size(640, 480), 0, 0, CV_INTER_LINEAR);
     
 
     switch(method){
 
-        case 0: enchance_ground(frame, workingFrame);
+        case 0: enchance_ground(original, workingFrame);
         smethod = "";
                 break;
-        case 1: identify_ob_by_edges(frame, workingFrame);
-        smethod = "identify_ob_by_edges";
-                break;
-        case 2: cHoughLines(frame, workingFrame, workingFrame1);
+        /*case 1: getEdges(original);
+        smethod = "getEdges";
+                break;*/
+        case 2: cHoughLines(original, workingFrame, workingFrame1, 70, 20);
         smethod = "cHoughLines";
                 break;   
-        case 3: cascadeClassifier(frame, workingFrame);
+        case 3: cascadeClassifier(original, workingFrame);
         smethod = "cascadeClassifier";
                 break;
 
-        case 4: applyCLAHE(frame, 4, workingFrame);
+        case 4: applyCLAHE(original, 4, workingFrame);
         smethod = "applyCLAHE";
                 break;
 
-        case 5: increace_contrast(frame, 2, 0, workingFrame);
+        case 5: increace_contrast(original, 2, 0, workingFrame);
         smethod = "increace_contrast";
                 break;
-        case 6: foo(frame, 2 ,2 , workingFrame);
+        case 6: foo(original, 2 ,2 , workingFrame);
         smethod = "foo";
                 break;
-
+        case 7: foo2(original, 2, 2, workingFrame);
+        smethod = "foo2";
+                break;
 
     }
     //cvtColor( workingFrame, workingFrame, cv::COLOR_RGB2GRAY );
     //auto const kernel = cv::getStructuringElement(cv::MORPH_RECT, {3,3});
     //cv::dilate(workingFrame, workingFrame, kernel);
-    //identify_ob_by_edges(frame);  
+    //getEdges(frame);  
     //cv::imshow("Betther Ground", workingFrame);
     //cvtColor(frame, workingFrame, cv::COLOR_RGB2GRAY);
     //lines = cv2.HoughLinesP(edges,1,np.pi/180,40,minLineLength=30,maxLineGap=30)
@@ -131,7 +136,8 @@ int main( int argc, char** argv )
         
     
     
-    imshow( "Original", frame );
+    imshow( "Original", original );
+    cv::imwrite("result.jpg", original);
     imshow( smethod, workingFrame );
  
     // Press  ESC on keyboard to exit
@@ -148,11 +154,14 @@ int main( int argc, char** argv )
      
   return 0;
 }
-void cHoughLines(cv::Mat const &newFrame, cv::Mat &cdst, cv::Mat &cdstP){
+void cHoughLines(cv::Mat const &newFrame, cv::Mat &cdst, cv::Mat &cdstP,int minLineLength, int maxLineGap){
 
     Mat workingFrame;
     // Edge detection
     Canny(newFrame, workingFrame, 50, 200, 3);
+
+    imshow("dfs", workingFrame);
+
     // Copy edges to the images that will display the results in BGR
     cvtColor(workingFrame, cdst, COLOR_GRAY2BGR);
     cdstP = cdst.clone();
@@ -174,7 +183,7 @@ void cHoughLines(cv::Mat const &newFrame, cv::Mat &cdst, cv::Mat &cdstP){
     }
     // Probabilistic Line Transform
     vector<Vec4i> linesP; // will hold the results of the detection
-    HoughLinesP(workingFrame, linesP, 1, CV_PI/180, 50, 50, 10 ); // runs the actual detection
+    HoughLinesP(workingFrame, linesP, 1, CV_PI/180, 50, minLineLength, maxLineGap ); // runs the actual detection
     // Draw the lines
     for( size_t i = 0; i < linesP.size(); i++ )
     {
@@ -187,24 +196,43 @@ void cHoughLines(cv::Mat const &newFrame, cv::Mat &cdst, cv::Mat &cdstP){
     
 }
 
-void identify_ob_by_edges(cv::Mat const &img, cv::Mat &result)
-{
-    int borderSize = 1;
-    Mat a ;
+void makeBoder(cv::Mat &img, int borderSize){
 
-    cv::copyMakeBorder(img, a, borderSize, borderSize,
-               borderSize, borderSize, BORDER_CONSTANT, Scalar(255 ,255 , 255));
+    cv::copyMakeBorder(img, img, borderSize, borderSize,
+        borderSize, borderSize, BORDER_CONSTANT, Scalar(255 ,255 , 255));
+}
 
-    cv::Mat gray;
+void makeBinary(cv::Mat const &img, cv::Mat &result){
+
+    result = img.clone();
+    //cv::Mat gray;
     //cv::pyrMeanShiftFiltering(img,gray,10,10);
-    cv::cvtColor(a, gray, CV_BGR2GRAY);
+    cv::cvtColor(img, result, CV_BGR2GRAY);
+    cv::threshold(result, result, 0, 255, cv::THRESH_BINARY + cv::THRESH_OTSU);
+    auto const kernel = cv::getStructuringElement(cv::MORPH_RECT, {1,1});
+    cv::dilate(result, result, kernel);
+
+
+}
+
+vector<vector<Point>> getEdges(cv::Mat const &img)
+{
+    /*cv::Mat gray;
+    //cv::pyrMeanShiftFiltering(img,gray,10,10);
+    cv::cvtColor(img, gray, CV_BGR2GRAY);
     cv::threshold(gray, gray, 0, 255, cv::THRESH_BINARY + cv::THRESH_OTSU);
     auto const kernel = cv::getStructuringElement(cv::MORPH_RECT, {1,1});
-    cv::dilate(gray, gray, kernel);
+    cv::dilate(gray, gray, kernel);*/
 
     std::vector<std::vector<cv::Point>> contours;
-    cv::findContours(gray.clone(), contours, cv::RETR_TREE,
+
+
+    cv::findContours(img.clone(), contours, cv::RETR_TREE,
                      cv::CHAIN_APPROX_SIMPLE);
+
+    return contours;
+
+    /*
     result = a.clone();
     for(auto const &contour : contours){
         auto const rect = cv::boundingRect(contour);
@@ -216,6 +244,8 @@ void identify_ob_by_edges(cv::Mat const &img, cv::Mat &result)
     //cv::imshow("binarize", gray);
     //cv::imshow("color", img_copy);
     //cv::imwrite("result.jpg", img_copy);
+
+    */
 }
 
 void applyCLAHE(cv::Mat const &img, int clim, cv::Mat &result) { 
@@ -259,8 +289,6 @@ void cascadeClassifier(cv::Mat const &img, cv::Mat &result){
             rectangle(result, Rect(car.x,car.y, car.x+car.width,car.y+car.height), {0,0,255}, 2);
              
         }
-    
-       // imshow("test", workingFrame);
     }
 
 void enchance_ground(cv::Mat const &img, cv::Mat &result){
@@ -281,7 +309,6 @@ void enchance_ground(cv::Mat const &img, cv::Mat &result){
             }
         }
     }
-
     //applyCLAHE(result, 5);
     //imshow("test", result);
     //cvtColor(frame, result, CV_BGR2GRAY);
@@ -303,12 +330,9 @@ void increace_contrast(cv::Mat const &image, double alpha, int beta, cv::Mat &re
         }
         }
 
-     /// Create Windows
-     namedWindow("New Image", 1);
+        result = new_image.clone();
 
-     /// Show stuff
-     //imshow("New Image", new_image);
-     identify_ob_by_edges(new_image, result);
+     //getEdges(new_image, result);
 }
 
 
@@ -339,5 +363,78 @@ void foo(cv::Mat const&img, double alpha, int beta, cv::Mat &result){
     cvtColor(workingFrame, cdst, COLOR_GRAY2BGR);
     cdstP = cdst.clone();
 
-     identify_ob_by_edges(cdstP, result);
+     //getEdges(cdstP, result);
+}
+
+void foo2(cv::Mat const&img, double alpha, int beta, cv::Mat &result){
+
+    
+    result = img.clone();
+    Mat tmp = img.clone();
+    makeBoder(original, 3);
+
+    result = original.clone();
+
+    Mat hl, hlp;
+
+    increace_contrast(result, alpha, beta, tmp);
+
+    makeBinary(tmp, tmp);
+
+    imshow( "contrast", tmp );
+    
+    vector<vector<Point>> cars = getEdges(tmp);
+
+    /*Mat inverseImage;
+    bitwise_not(tmp, inverseImage);
+
+    imshow( "inverse", inverseImage );
+*/
+
+    Mat freespaces = original.clone();
+    //applyCLAHE(original, 2, freespaces);
+    cHoughLines(freespaces, hl, hlp, 15, 20);
+    makeBinary(hlp, hlp);
+    imshow( "frespace", hlp );
+    vector<vector<Point>> spaces = getEdges(hlp);
+
+    //bool intersects = ((A & B).area() > 0);
+
+    for(auto const &car : cars){
+        auto const rect = cv::boundingRect(car);
+        if(rect.area() >= 10000 && rect.area() < 50000 ){
+            cv::rectangle(result, rect, {0, 0, 255}, 3);
+        }
+    }
+
+    bool trueFreeSpace;
+    Rect overlap, runion;
+    for(auto const &space : spaces){
+        auto const rect = cv::boundingRect(space);
+        trueFreeSpace = true;
+        for(auto const &car : cars){
+
+            auto const rectc = cv::boundingRect(car);
+            // filter small rectangles
+
+            if(rect.area() < 10000 || rectc.area() <10000)
+                continue;
+
+            overlap = rectc & rect;
+            runion = rectc | rect;
+
+            //cv::rectangle(result, rect, {0, 0, 0}, 3);
+            if(overlap.area() > 0.25 * runion.area())
+            {
+                trueFreeSpace = false;
+                break;
+            }
+        }
+
+
+        if(rect.area() >= 15000 && rect.area() < 70000 && trueFreeSpace){
+            cv::rectangle(result, rect, {0, 255, 0}, 3);
+        }
+    }
+
 }
