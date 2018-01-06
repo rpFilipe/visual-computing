@@ -362,7 +362,7 @@ void foo(cv::Mat const&img, double alpha, int beta, cv::Mat &result){
     // Copy edges to the images that will display the results in BGR
     cvtColor(workingFrame, cdst, COLOR_GRAY2BGR);
     cdstP = cdst.clone();
-
+        result = cdst.clone();
      //getEdges(cdstP, result);
 }
 
@@ -402,7 +402,7 @@ void foo2(cv::Mat const&img, double alpha, int beta, cv::Mat &result){
 
     for(auto const &car : cars){
         auto const rect = cv::boundingRect(car);
-        if(rect.area() >= 10000 && rect.area() < 50000 ){
+        if(rect.area() >= 10000 && rect.area() < 100000 ){
             cv::rectangle(result, rect, {0, 0, 255}, 3);
         }
     }
