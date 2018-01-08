@@ -34,14 +34,17 @@ using namespace cv;
 using namespace std;
 vector<vector<Point>> getEdges(cv::Mat const &img);
 void makeBinary(cv::Mat const &img, cv::Mat &result);
+void filterColor(cv::Mat const &img, cv::Mat &result);
 void makeBoder(cv::Mat &img, int borderSize);
 void enchance_ground(cv::Mat const &img, cv::Mat &result);
 void cHoughLines(cv::Mat const &img, cv::Mat &result0, cv::Mat &result1, int minLineLength, int maxLineGap);
 void cascadeClassifier(cv::Mat const &img, cv::Mat &result);
 void applyCLAHE(cv::Mat const &img, int clim, cv::Mat &result);
 void increace_contrast(cv::Mat const &image, double alpha, int beta, cv::Mat &result);
-void foo(cv::Mat const &img, double alpha, int beta, cv::Mat &result);
 void foo2(cv::Mat const &img, double alpha, int beta, cv::Mat &result);
+void foo3(cv::Mat const &img, double alpha, int beta, cv::Mat &result);
+void foo4(cv::Mat const &img, double alpha, int beta, cv::Mat &result);
+void foo5(cv::Mat const &img, cv::Mat &result);
 
 CascadeClassifier cars_cascade;
 Mat original;
@@ -58,7 +61,8 @@ int main( int argc, char** argv )
     int method = atoi(argv[2]);
     string smethod = "";
     const string videoFilename = argv[1];	 
-    cars_cascade.load("cars2.xml");       
+    cars_cascade.load("cars2.xml");
+    std::vector<std::vector<cv::Point>> contours ;    
 	
 	// Open Camera or Video	File
 	VideoCapture cap;
@@ -96,11 +100,16 @@ int main( int argc, char** argv )
     switch(method){
 
         case 0: enchance_ground(original, workingFrame);
-        smethod = "";
+        smethod = "enchance_ground";
                 break;
-        /*case 1: getEdges(original);
+        case 1: workingFrame1 = original.clone();
+                workingFrame = original.clone();
+                makeBinary(original, workingFrame1);
+                contours = getEdges(workingFrame1);
+
+                drawContours(workingFrame, contours, -1, Scalar(255,0,0));
         smethod = "getEdges";
-                break;*/
+                break;
         case 2: cHoughLines(original, workingFrame, workingFrame1, 70, 20);
         smethod = "cHoughLines";
                 break;   
@@ -115,29 +124,22 @@ int main( int argc, char** argv )
         case 5: increace_contrast(original, 2, 0, workingFrame);
         smethod = "increace_contrast";
                 break;
-        case 6: foo(original, 2 ,2 , workingFrame);
-        smethod = "foo";
-                break;
-        case 7: foo2(original, 2, 2, workingFrame);
+        case 6: foo2(original, 2 ,2 , workingFrame);
         smethod = "foo2";
+                break;
+        case 7: foo3(original, 2, 2, workingFrame);
+        smethod = "foo3";
+                break;
+
+        case 8: filterColor(original, workingFrame);
+        smethod = "filter white";
                 break;
 
     }
-    //cvtColor( workingFrame, workingFrame, cv::COLOR_RGB2GRAY );
-    //auto const kernel = cv::getStructuringElement(cv::MORPH_RECT, {3,3});
-    //cv::dilate(workingFrame, workingFrame, kernel);
-    //getEdges(frame);  
-    //cv::imshow("Betther Ground", workingFrame);
-    //cvtColor(frame, workingFrame, cv::COLOR_RGB2GRAY);
-    //lines = cv2.HoughLinesP(edges,1,np.pi/180,40,minLineLength=30,maxLineGap=30)
-    //threshold( workingFrame, workingFrame, 180,255,THRESH_BINARY ); 
-    //dilationElement = getStructuringElement(MORPH_ELLIPSE, Size(morphSize, morphSize));
-    //dilate(workingFrame, workingFrame, dilationElement);
         
-    
-    
     imshow( "Original", original );
-    cv::imwrite("result.jpg", original);
+    if(method == 2)
+        imshow( smethod + " Prob", workingFrame1 );
     imshow( smethod, workingFrame );
  
     // Press  ESC on keyboard to exit
@@ -148,26 +150,39 @@ int main( int argc, char** argv )
   
   // When everything done, release the video capture object
   cap.release();
- 
   // Closes all the frames
-  destroyAllWindows();
-     
+  destroyAllWindows();  
   return 0;
 }
+
+void filterColor(cv::Mat const &img, cv::Mat &result){
+    
+    // white color
+    Mat hsv_image;
+    cvtColor(img, hsv_image, COLOR_BGR2HSV);
+
+    Mat mask;
+    int sensitivity = 50;
+    inRange(hsv_image,
+        Scalar(0, 0, 255-sensitivity),
+        Scalar(255, sensitivity, 255),
+        mask);
+
+    bitwise_and(img, img, result, mask);
+}
+
 void cHoughLines(cv::Mat const &newFrame, cv::Mat &cdst, cv::Mat &cdstP,int minLineLength, int maxLineGap){
 
     Mat workingFrame;
     // Edge detection
     Canny(newFrame, workingFrame, 50, 200, 3);
-
-    imshow("dfs", workingFrame);
-
-    // Copy edges to the images that will display the results in BGR
     cvtColor(workingFrame, cdst, COLOR_GRAY2BGR);
     cdstP = cdst.clone();
+
     // Standard Hough Line Transform
-    vector<Vec2f> lines; // will hold the results of the detection
-    HoughLines(workingFrame, lines, 1, CV_PI/180, 150, 0, 0 ); // runs the actual detection
+    vector<Vec2f> lines;
+    HoughLines(workingFrame, lines, 1, CV_PI/180, 150, 0, 0 );
+    
     // Draw the lines
     for( size_t i = 0; i < lines.size(); i++ )
     {
@@ -182,18 +197,15 @@ void cHoughLines(cv::Mat const &newFrame, cv::Mat &cdst, cv::Mat &cdstP,int minL
         line( cdst, pt1, pt2, Scalar(0,0,255), 3, CV_AA);
     }
     // Probabilistic Line Transform
-    vector<Vec4i> linesP; // will hold the results of the detection
-    HoughLinesP(workingFrame, linesP, 1, CV_PI/180, 50, minLineLength, maxLineGap ); // runs the actual detection
+    vector<Vec4i> linesP;
+    HoughLinesP(workingFrame, linesP, 1, CV_PI/180, 50, minLineLength, maxLineGap );
+    
     // Draw the lines
     for( size_t i = 0; i < linesP.size(); i++ )
     {
         Vec4i l = linesP[i];
         line( cdstP, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,0,255), 3, CV_AA);
     }
-    
-    //imshow("Detected Lines (in red) - Standard Hough Line Transform", cdst);
-    //imshow("Detected Lines (in red) - Probabilistic Line Transform", cdstP);
-    
 }
 
 void makeBoder(cv::Mat &img, int borderSize){
@@ -205,25 +217,14 @@ void makeBoder(cv::Mat &img, int borderSize){
 void makeBinary(cv::Mat const &img, cv::Mat &result){
 
     result = img.clone();
-    //cv::Mat gray;
-    //cv::pyrMeanShiftFiltering(img,gray,10,10);
     cv::cvtColor(img, result, CV_BGR2GRAY);
     cv::threshold(result, result, 0, 255, cv::THRESH_BINARY + cv::THRESH_OTSU);
     auto const kernel = cv::getStructuringElement(cv::MORPH_RECT, {1,1});
     cv::dilate(result, result, kernel);
-
-
 }
 
 vector<vector<Point>> getEdges(cv::Mat const &img)
 {
-    /*cv::Mat gray;
-    //cv::pyrMeanShiftFiltering(img,gray,10,10);
-    cv::cvtColor(img, gray, CV_BGR2GRAY);
-    cv::threshold(gray, gray, 0, 255, cv::THRESH_BINARY + cv::THRESH_OTSU);
-    auto const kernel = cv::getStructuringElement(cv::MORPH_RECT, {1,1});
-    cv::dilate(gray, gray, kernel);*/
-
     std::vector<std::vector<cv::Point>> contours;
 
 
@@ -231,34 +232,17 @@ vector<vector<Point>> getEdges(cv::Mat const &img)
                      cv::CHAIN_APPROX_SIMPLE);
 
     return contours;
-
-    /*
-    result = a.clone();
-    for(auto const &contour : contours){
-        auto const rect = cv::boundingRect(contour);
-        if(rect.area() >= 7000 && rect.area() < 30000 ){
-            cv::rectangle(result, rect, {255, 0, 0}, 3);
-        }
-    }
-
-    //cv::imshow("binarize", gray);
-    //cv::imshow("color", img_copy);
-    //cv::imwrite("result.jpg", img_copy);
-
-    */
 }
 
 void applyCLAHE(cv::Mat const &img, int clim, cv::Mat &result) { 
-    //Function that applies the CLAHE algorithm to "dstArry".
-    // READ RGB color image and convert it to Lab
-    result = img.clone();
 
+    result = img.clone();
     cv::cvtColor(img, result, CV_BGR2Lab);
 
     // Extract the L channel
     std::vector<cv::Mat> lab_planes(3);
-    cv::split(result, lab_planes);  // now we have the L image in lab_planes[0]
-
+    cv::split(result, lab_planes);
+    
     // apply the CLAHE algorithm to the L channel
     cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE();
     clahe->setClipLimit(clim);
@@ -272,9 +256,6 @@ void applyCLAHE(cv::Mat const &img, int clim, cv::Mat &result) {
    // convert back to RGB
    cv::Mat image_clahe;
    cv::cvtColor(result, image_clahe, CV_Lab2BGR);
-
-   // display the results  (you might also want to see lab_planes[0] before and after).
-   //cv::imshow("image CLAHE", lab_planes);
 }
 
 void cascadeClassifier(cv::Mat const &img, cv::Mat &result){
@@ -309,15 +290,11 @@ void enchance_ground(cv::Mat const &img, cv::Mat &result){
             }
         }
     }
-    //applyCLAHE(result, 5);
-    //imshow("test", result);
-    //cvtColor(frame, result, CV_BGR2GRAY);
 }
 
 void increace_contrast(cv::Mat const &image, double alpha, int beta, cv::Mat &result){
 
-    /// Read image given by user
-    Mat new_image = Mat::zeros( image.size(), image.type() );
+    Mat new_image = image.clone();
 
      /// Do the operation new_image(i,j) = alpha*image(i,j) + beta
      for( int y = 0; y < image.rows; y++ )
@@ -331,39 +308,6 @@ void increace_contrast(cv::Mat const &image, double alpha, int beta, cv::Mat &re
         }
 
         result = new_image.clone();
-
-     //getEdges(new_image, result);
-}
-
-
-void foo(cv::Mat const&img, double alpha, int beta, cv::Mat &result){
-    Mat cdst;
-    Mat cdstP;
-    Mat workingFrame;
-
-    // Read image given by user
-    Mat new_image = Mat::zeros( img.size(), img.type() );
-
-     /// Do the operation new_image(i,j) = alpha*image(i,j) + beta
-     for( int y = 0; y < img.rows; y++ )
-        { for( int x = 0; x < img.cols; x++ )
-             { for( int c = 0; c < 3; c++ )
-                  {
-          new_image.at<Vec3b>(y,x)[c] =
-             saturate_cast<uchar>( alpha*( img.at<Vec3b>(y,x)[c] ) + beta );
-                 }
-        }
-        }
-
-     /// Create Windows
-
-  // Edge detection
-    Canny(new_image, workingFrame, 50, 200, 3);
-    // Copy edges to the images that will display the results in BGR
-    cvtColor(workingFrame, cdst, COLOR_GRAY2BGR);
-    cdstP = cdst.clone();
-        result = cdst.clone();
-     //getEdges(cdstP, result);
 }
 
 void foo2(cv::Mat const&img, double alpha, int beta, cv::Mat &result){
@@ -380,25 +324,14 @@ void foo2(cv::Mat const&img, double alpha, int beta, cv::Mat &result){
     increace_contrast(result, alpha, beta, tmp);
 
     makeBinary(tmp, tmp);
-
-    imshow( "contrast", tmp );
     
     vector<vector<Point>> cars = getEdges(tmp);
 
-    /*Mat inverseImage;
-    bitwise_not(tmp, inverseImage);
-
-    imshow( "inverse", inverseImage );
-*/
-
     Mat freespaces = original.clone();
-    //applyCLAHE(original, 2, freespaces);
     cHoughLines(freespaces, hl, hlp, 15, 20);
     makeBinary(hlp, hlp);
-    imshow( "frespace", hlp );
     vector<vector<Point>> spaces = getEdges(hlp);
 
-    //bool intersects = ((A & B).area() > 0);
 
     for(auto const &car : cars){
         auto const rect = cv::boundingRect(car);
@@ -423,7 +356,6 @@ void foo2(cv::Mat const&img, double alpha, int beta, cv::Mat &result){
             overlap = rectc & rect;
             runion = rectc | rect;
 
-            //cv::rectangle(result, rect, {0, 0, 0}, 3);
             if(overlap.area() > 0.25 * runion.area())
             {
                 trueFreeSpace = false;
@@ -437,4 +369,108 @@ void foo2(cv::Mat const&img, double alpha, int beta, cv::Mat &result){
         }
     }
 
+}
+
+void foo3(cv::Mat const&img, double alpha, int beta, cv::Mat &result){
+    result = img.clone();
+    Mat tmp = img.clone();
+    makeBoder(original, 3);
+
+    result = original.clone();
+
+    Mat hl, hlp;
+
+    increace_contrast(result, alpha, beta, tmp);
+
+    makeBinary(tmp, tmp);
+    
+    vector<vector<Point>> cars = getEdges(tmp);
+
+    Mat inverseImage;
+    bitwise_not(tmp, inverseImage);
+
+    vector<vector<Point>> spaces = getEdges(inverseImage);
+
+    for(auto const &car : cars){
+        auto const rect = cv::boundingRect(car);
+        if(rect.area() >= 10000 && rect.area() < 100000 ){
+            cv::rectangle(result, rect, {0, 0, 255}, 3);
+        }
+    }
+
+    for(auto const &space : spaces){
+        auto const rect = cv::boundingRect(space);
+        if(rect.area() >= 10000 && rect.area() < 100000 ){
+            cv::rectangle(result, rect, {0, 255, 0}, 3);
+        }
+    }
+}
+
+void foo4(cv::Mat const&img, double alpha, int beta, cv::Mat &result){
+    
+        
+        result = img.clone();
+        Mat tmp = img.clone();
+        makeBoder(original, 3);
+    
+        result = original.clone();
+    
+        Mat hl, hlp;
+    
+        increace_contrast(result, alpha, beta, tmp);
+    
+        makeBinary(tmp, tmp);
+        
+        vector<vector<Point>> cars = getEdges(tmp);
+    
+        Mat freespaces = original.clone();
+
+        //applyCLAHE(original, 2, freespaces);
+        cHoughLines(freespaces, hl, hlp, 15, 20);
+        makeBinary(hlp, hlp);
+        imshow( "frespace", hlp );
+        cv::imwrite("hough_noise.jpg", hlp);
+        vector<vector<Point>> spaces = getEdges(hlp);
+    
+        for(auto const &car : cars){
+            auto const rect = cv::boundingRect(car);
+            if(rect.area() >= 10000 && rect.area() < 100000 ){
+                cv::rectangle(result, rect, {0, 0, 255}, 3);
+            }
+        }
+    
+        for(auto const &space : spaces){
+            auto const rect = cv::boundingRect(space);
+            if(rect.area() >= 10000 && rect.area() < 100000 ){
+                cv::rectangle(result, rect, {0, 255, 0}, 3);
+            }
+        }
+    
+    }
+
+void foo5(cv::Mat const&img, cv::Mat &result){
+    result = img.clone();
+    Mat tmp = img.clone();
+    makeBoder(original, 3);
+
+    result = original.clone();
+
+    Mat hl, hlp;
+
+    makeBinary(tmp, tmp);
+
+    
+    vector<vector<Point>> cars = getEdges(tmp);
+
+    Mat inverseImage;
+    bitwise_not(tmp, inverseImage);
+
+    vector<vector<Point>> spaces = getEdges(inverseImage);
+
+    for(auto const &car : cars){
+        auto const rect = cv::boundingRect(car);
+        if(rect.area() >= 10000 && rect.area() < 100000 ){
+            cv::rectangle(result, rect, {0, 0, 255}, 3);
+        }
+    }
 }
